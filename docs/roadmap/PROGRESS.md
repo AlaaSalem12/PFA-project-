@@ -38,3 +38,8 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - New `components/PasswordStrength.tsx` + `utils/passwordPolicy.ts` (rules + zod `newPasswordSchema`), used in reset and change-password forms; change-password shows server error.
 - Profile uses `GET /auth/me` (useQuery): email, formatted role, last login, linked employee; hardcoded "Active" removed.
 - Left: the employee link goes to `/hr/employees/:id` (shown only for ADMIN/HR_MANAGER), which is not a route yet; EmployeeRef has no department so it is not shown. Manual forgot/reset flow not run.
+
+## P1-14 — Users administration
+- `api/users.api.ts` rewritten (list with all filters, get, create, update, setUserEnabled, resetUserPassword, unlockUser, removeUser, listEmployeeOptions). New `features/users/` (UsersPage, UserFormDialog, TemporaryPasswordDialog, roles.ts); route `/admin/users` now renders UsersPage; old AdministrationPage deleted.
+- Table: server pagination/sort, URL-state search/role/enabled filters, row menu with ConfirmDialog for disable/reset/delete; Disable/Reset/Delete hidden on own row; Unlock only when locked. Temporary password dialog (copy + warning) or "Credentials sent by email" toast.
+- Left: manual admin test not run; `ManagedUser` type in types/api.ts is now unused; users sortable columns assume server accepts fullName/username/role/lastLoginAt.

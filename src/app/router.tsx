@@ -26,10 +26,8 @@ const DashboardPage = lazy(() =>
     default: module.DashboardPage,
   })),
 );
-const AdministrationPage = lazy(() =>
-  import('../features/administration/AdministrationPage').then((module) => ({
-    default: module.AdministrationPage,
-  })),
+const UsersPage = lazy(() =>
+  import('../features/users/UsersPage').then((module) => ({ default: module.UsersPage })),
 );
 const ProfilePage = lazy(() =>
   import('../features/auth/ProfilePage').then((module) => ({ default: module.ProfilePage })),
@@ -65,7 +63,7 @@ export function AppRouter() {
               <Route path="/hr/organization" element={<PlaceholderPage title="Organization" />} />
             </Route>
             <Route element={<ProtectedRoute roles={['ADMIN']} />}>
-              <Route path="/admin/users" element={<AdministrationPage />} />
+              <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/audit-logs" element={<AuditLogPage />} />
             </Route>
             <Route path="/profile" element={<ProfilePage />} />
