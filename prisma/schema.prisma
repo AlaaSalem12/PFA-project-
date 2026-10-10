@@ -20,13 +20,6 @@ enum EmployeeStatus {
   SUSPENDED
   TERMINATED
 }
-enum MachineStatus {
-  RUNNING
-  IDLE
-  BREAKDOWN
-  MAINTENANCE
-  RETIRED
-}
 enum MachineType {
   CNC
   LATHE

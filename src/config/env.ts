@@ -23,7 +23,7 @@ const envSchema = z.object({
   LLM_API_KEY: z.string().optional(),
   LLM_MODEL: z.string().optional(),
   SEED_ADMIN_USERNAME: z.string().default("admin"),
-  SEED_ADMIN_PASSWORD: z.string().min(8).default("Admin@123"),
+  SEED_ADMIN_PASSWORD: z.string().min(8).default("Demo@1234"),
   SEED_ADMIN_EMAIL: z.string().email().default("admin@metal.local"),
 }).superRefine((value, context) => {
   if (value.NODE_ENV !== "production") return;
