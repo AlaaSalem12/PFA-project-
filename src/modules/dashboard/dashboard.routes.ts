@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Role } from "@prisma/client";
 import { prisma } from "../../config/prisma";
 import { asyncHandler } from "../../common/async-handler";
+import { toMachineDtos } from "../machine/machine.dto";
 import { authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 
 export const dashboardRouter = Router();
@@ -33,7 +34,7 @@ dashboardRouter.get("/", asyncHandler(async (_req, res) => {
       recentLogins, recentlyCreated,
     },
     machines: {
-      total: totalMachines, byStatus, byType, overdueMaintenance, recentStatusChanges, machinesInBreakdown,
+      total: totalMachines, byStatus, byType, overdueMaintenance, recentStatusChanges, machinesInBreakdown: toMachineDtos(machinesInBreakdown),
     },
   });
 }));

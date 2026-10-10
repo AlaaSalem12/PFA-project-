@@ -11,6 +11,7 @@ const envSchema = z.object({
   JWT_SECRET: secret,
   JWT_REFRESH_SECRET: secret,
   CORS_ORIGIN: z.string().default("http://localhost:4200,http://localhost:5173,http://localhost:3000"),
+  UPLOADS_DIR: z.string().default("uploads"),
   TRUST_PROXY: z.coerce.number().int().min(0).default(1),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().int().positive().default(587),

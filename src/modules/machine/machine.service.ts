@@ -2,6 +2,10 @@ import { MaintenanceStatus, Prisma } from "@prisma/client";
 import { prisma } from "../../config/prisma";
 import { ApiError } from "../../common/api-error";
 import { pageResponse } from "../../common/pagination";
+import { toMachineDto, toMachineDtos } from "./machine.dto";
+import { removeMachineImage, saveMachineImage } from "./machine-image";
+
+const operatorSelect = { id: true, matricule: true, firstName: true, lastName: true } as const;
 
 const transitions: Record<MaintenanceStatus, MaintenanceStatus[]> = {
   OPERATIONAL: ["SCHEDULED_MAINTENANCE", "UNDER_MAINTENANCE", "BREAKDOWN", "OUT_OF_SERVICE"],
@@ -38,26 +42,64 @@ export class MachineService {
       prisma.machine.findMany({ where, orderBy, skip: query.page * query.size, take: query.size }),
       prisma.machine.count({ where }),
     ]);
-    return pageResponse(content, totalElements, query.page, query.size);
+    return pageResponse(toMachineDtos(content), totalElements, query.page, query.size);
   }
 
-  async get(id: number) {
+  /** Raw row (Decimals untouched) for internal checks. */
+  private async find(id: number) {
     const machine = await prisma.machine.findFirst({ where: { id, deletedAt: null } });
     if (!machine) throw new ApiError(404, "Machine not found");
     return machine;
   }
 
+  async get(id: number) {
+    const machine = await prisma.machine.findFirst({
+      where: { id, deletedAt: null },
+      include: { authorizedOperators: { select: operatorSelect, orderBy: { lastName: "asc" } } },
+    });
+    if (!machine) throw new ApiError(404, "Machine not found");
+    return toMachineDto(machine);
+  }
+
   async create(input: Prisma.MachineCreateInput, actorId: number) {
-    return prisma.machine.create({ data: { ...input, createdBy: { connect: { id: actorId } } } });
+    return toMachineDto(await prisma.machine.create({ data: { ...input, createdBy: { connect: { id: actorId } } } }));
   }
 
   async update(id: number, input: Prisma.MachineUpdateInput) {
-    await this.get(id);
-    return prisma.machine.update({ where: { id }, data: input });
+    await this.find(id);
+    return toMachineDto(await prisma.machine.update({ where: { id }, data: input }));
+  }
+
+  async setImage(id: number, file: Buffer) {
+    const current = await this.find(id);
+    const imageUrl = saveMachineImage(id, file);
+    const machine = await prisma.machine.update({ where: { id }, data: { imageUrl } });
+    removeMachineImage(current.imageUrl);
+    return toMachineDto(machine);
+  }
+
+  async setOperators(id: number, employeeIds: number[]) {
+    await this.find(id);
+    const ids = [...new Set(employeeIds)];
+    const found = await prisma.employee.count({ where: { id: { in: ids }, deletedAt: null } });
+    if (found !== ids.length) {
+      throw new ApiError(400, "Unknown employee id in employeeIds", [{ field: "employeeIds", message: "Unknown employee" }], "VALIDATION_ERROR");
+    }
+    await prisma.machine.update({ where: { id }, data: { authorizedOperators: { set: ids.map((employeeId) => ({ id: employeeId })) } } });
+    return this.get(id);
+  }
+
+  async workOrders(id: number) {
+    await this.find(id);
+    const orders = await prisma.workOrder.findMany({
+      where: { machineId: id }, orderBy: { openedAt: "desc" }, take: 50,
+      include: { machine: { select: { id: true, code: true, name: true } }, assignedTo: { select: { id: true, firstName: true, lastName: true } } },
+    });
+    return orders.map((order) => ({ ...order, cost: order.cost === null ? null : Number(order.cost) }));
   }
 
   async remove(id: number) {
-    await this.get(id);
+    await this.find(id);
     const openOrders = await prisma.workOrder.count({
       where: { machineId: id, status: { in: ["OPEN", "IN_PROGRESS"] } },
     });
@@ -66,24 +108,30 @@ export class MachineService {
   }
 
   async changeStatus(id: number, toStatus: MaintenanceStatus, comment: string | undefined, actorId: number, actorRole: string) {
-    const machine = await this.get(id);
+    const machine = await this.find(id);
     if ((toStatus === "BREAKDOWN" || toStatus === "OUT_OF_SERVICE") && !comment) {
       throw new ApiError(400, "A comment is required for breakdown or out-of-service status");
     }
-    if (machine.maintenanceStatus === toStatus) return machine;
+    if (machine.maintenanceStatus === toStatus) return toMachineDto(machine);
     if (machine.maintenanceStatus === "OUT_OF_SERVICE" && actorRole !== "ADMIN") {
       throw new ApiError(409, "Only an admin can restore an out-of-service machine");
     }
     if (!transitions[machine.maintenanceStatus].includes(toStatus)) {
       throw new ApiError(409, `Invalid transition from ${machine.maintenanceStatus} to ${toStatus}`);
     }
+    const completesMaintenance = toStatus === "OPERATIONAL" && machine.maintenanceStatus === "UNDER_MAINTENANCE";
+    const now = new Date();
     const updated = await prisma.$transaction(async (tx) => {
       const next = await tx.machine.update({
         where: { id },
         data: {
           maintenanceStatus: toStatus,
-          lastMaintenanceAt: toStatus === "OPERATIONAL" && machine.maintenanceStatus === "UNDER_MAINTENANCE"
-            ? new Date() : undefined,
+          ...(completesMaintenance ? {
+            lastMaintenanceAt: now,
+            ...(machine.maintenanceIntervalDays
+              ? { nextMaintenanceDueAt: new Date(now.getTime() + machine.maintenanceIntervalDays * 24 * 60 * 60 * 1000) }
+              : {}),
+          } : {}),
         },
       });
       await tx.machineStatusLog.create({
@@ -103,11 +151,11 @@ export class MachineService {
       }
       return next;
     });
-    return updated;
+    return toMachineDto(updated);
   }
 
   async history(id: number) {
-    await this.get(id);
+    await this.find(id);
     return prisma.machineStatusLog.findMany({
       where: { machineId: id }, include: { changedBy: { select: { id: true, username: true, fullName: true } } },
       orderBy: { changedAt: "desc" },
@@ -115,12 +163,12 @@ export class MachineService {
   }
 
   async addNote(id: number, note: string, actorId: number) {
-    await this.get(id);
+    await this.find(id);
     return prisma.maintenanceNote.create({ data: { machineId: id, note, createdById: actorId } });
   }
 
   async notes(id: number) {
-    await this.get(id);
+    await this.find(id);
     return prisma.maintenanceNote.findMany({
       where: { machineId: id }, include: { createdBy: { select: { id: true, username: true, fullName: true } } },
       orderBy: { createdAt: "desc" },
@@ -128,9 +176,9 @@ export class MachineService {
   }
 
   async overdue() {
-    return prisma.machine.findMany({
+    return toMachineDtos(await prisma.machine.findMany({
       where: { deletedAt: null, nextMaintenanceDueAt: { lt: new Date() } },
       orderBy: { nextMaintenanceDueAt: "asc" },
-    });
+    }));
   }
 }

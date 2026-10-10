@@ -7,16 +7,13 @@ import { auditFrom } from "../../common/audit";
 import { AuthRequest, authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
 import {
-  machineBodySchema, machineIdSchema, machineQuerySchema, noteBodySchema, statusBodySchema,
+  machineBodySchema, machineIdSchema, machineQuerySchema, noteBodySchema, operatorsBodySchema, statusBodySchema,
 } from "./machine.schemas";
 import { MachineService } from "./machine.service";
 
 const service = new MachineService();
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req, file, callback) => callback(null, ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype)),
-});
+// Buffered in memory (max 5 MB), then validated by magic bytes and written to disk by the service.
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 export const machineRouter = Router();
 machineRouter.use(authenticate, requirePasswordChange);
 machineRouter.get("/", validate({ query: machineQuerySchema }), asyncHandler(async (req, res) => {
@@ -59,9 +56,16 @@ machineRouter.delete("/:id", authorize(Role.ADMIN), validate({ params: machineId
 }));
 machineRouter.post("/:id/image", authorize(Role.ADMIN), validate({ params: machineIdSchema }), upload.single("image"), asyncHandler(async (req: AuthRequest, res) => {
   if (!req.file) throw new ApiError(400, "A JPEG, PNG, or WEBP image is required", [], "VALIDATION_ERROR");
-  const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-  const machine = await service.update(Number(req.params.id), { imageUrl });
+  const machine = await service.setImage(Number(req.params.id), req.file.buffer);
   await auditFrom(req, { action: "MACHINE_IMAGE_UPDATED", entity: "Machine", entityId: machine.id });
   res.json(machine);
+}));
+machineRouter.put("/:id/operators", authorize(Role.ADMIN, Role.PRODUCTION_MANAGER), validate({ params: machineIdSchema, body: operatorsBodySchema }), asyncHandler(async (req: AuthRequest, res) => {
+  const machine = await service.setOperators(Number(req.params.id), req.body.employeeIds);
+  await auditFrom(req, { action: "MACHINE_OPERATORS_UPDATED", entity: "Machine", entityId: machine.id, metadata: { employeeIds: req.body.employeeIds } });
+  res.json(machine);
+}));
+machineRouter.get("/:id/work-orders", validate({ params: machineIdSchema }), asyncHandler(async (req, res) => {
+  res.json(await service.workOrders(Number(req.params.id)));
 }));
 export const maintenanceOverdueHandler = asyncHandler(async (_req, res) => res.json(await service.overdue()));

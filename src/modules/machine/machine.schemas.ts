@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { blankToUndefined, optionalDate, optionalNumber, optionalText } from "../../common/zod";
 
 export const machineStatusSchema = z.enum([
   "OPERATIONAL", "SCHEDULED_MAINTENANCE", "UNDER_MAINTENANCE", "BREAKDOWN", "OUT_OF_SERVICE",
@@ -20,17 +21,20 @@ export const machineBodySchema = z.object({
   code: z.string().trim().min(1).max(50),
   name: z.string().trim().min(1).max(150),
   type: machineTypeSchema,
-  brand: z.string().optional(),
-  model: z.string().optional(),
-  serialNumber: z.string().optional(),
-  purchaseDate: z.coerce.date().optional(),
-  workshop: z.string().optional(),
-  location: z.string().optional(),
-  hourlyCost: z.coerce.number().nonnegative().optional(),
-  operatingHours: z.coerce.number().nonnegative().optional(),
-  imageUrl: z.string().url().optional(),
-  nextMaintenanceDueAt: z.coerce.date().optional(),
-  notes: z.string().optional(),
+  brand: optionalText(100),
+  model: optionalText(100),
+  serialNumber: optionalText(100),
+  purchaseDate: optionalDate,
+  workshop: optionalText(100),
+  location: optionalText(100),
+  hourlyCost: optionalNumber,
+  operatingHours: optionalNumber,
+  maintenanceIntervalDays: z.preprocess(blankToUndefined, z.coerce.number().int().min(1).max(3650).optional()),
+  nextMaintenanceDueAt: optionalDate,
+  notes: optionalText(5000),
+});
+export const operatorsBodySchema = z.object({
+  employeeIds: z.array(z.number().int().positive()).max(200),
 });
 export const statusBodySchema = z.object({
   status: machineStatusSchema,

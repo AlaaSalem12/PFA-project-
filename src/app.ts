@@ -1,4 +1,5 @@
 import express from "express";
+import { uploadsRoot } from "./modules/machine/machine-image";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -20,7 +21,7 @@ import { ApiError } from "./common/api-error";
 
 export const app = express();
 app.set("trust proxy", env.TRUST_PROXY);
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 const allowedOrigins = env.CORS_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, callback) => {
@@ -37,6 +38,7 @@ app.use(rateLimit({
   windowMs: 15 * 60 * 1000, limit: env.NODE_ENV === "test" ? 10_000 : 1000,
   standardHeaders: "draft-8", legacyHeaders: false, handler: rateLimitHandler,
 }));
+app.use("/uploads", express.static(uploadsRoot, { maxAge: "7d" }));
 app.use(express.json());
 app.use(morgan("combined"));
 app.get("/health", (_req, res) => res.json({ status: "ok" }));

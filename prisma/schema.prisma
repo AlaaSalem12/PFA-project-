@@ -137,6 +137,7 @@ model Machine {
   imageUrl           String?    @map("image_url")
   lastMaintenanceAt  DateTime? @map("last_maintenance_at")
   nextMaintenanceDueAt DateTime? @map("next_maintenance_due_at")
+  maintenanceIntervalDays Int? @map("maintenance_interval_days")
   notes              String?
   deletedAt          DateTime?  @map("deleted_at")
   createdById        Int?      @map("created_by_id")
