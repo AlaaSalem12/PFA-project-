@@ -14,7 +14,7 @@ explicit and does not require NestJS's additional abstraction layer.
 - `GET /api/v1/auth/me`
 - `GET /api/v1/users`
 - `POST /api/v1/users`
-- Admin user lifecycle: `/api/v1/admin/users`
+- User lifecycle (admin): `/api/v1/users` (incl. `/:id/unlock`)
 - Machine management and status history: `/api/v1/machines`
 - `GET /api/v1/notifications`, `PATCH /api/v1/notifications/:id/read`
 - `GET /api/v1/admin/dashboard`

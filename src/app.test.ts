@@ -65,6 +65,7 @@ jest.mock("bcrypt", () => ({
 import request from "supertest";
 import { Prisma } from "@prisma/client";
 import { app } from "./app";
+import { mailService } from "./modules/mail/mail.service";
 
 describe("API integration contracts", () => {
   let adminToken: string;
@@ -371,6 +372,55 @@ describe("API integration contracts", () => {
       expect(ok.body.imageUrl).toMatch(/^\/uploads\/machines\/10-\d+\.png$/);
       const served = await request(app).get(ok.body.imageUrl);
       expect(served.status).toBe(200);
+    });
+  });
+
+  describe("users (P1-05)", () => {
+    const post = async (body: object) => request(app).post("/api/v1/users")
+      .set("Authorization", `Bearer ${await tokenFor("admin")}`).send(body);
+
+    it("generates a username from the e-mail when none is sent", async () => {
+      const response = await post({ fullName: "New Person", email: "New.Person@Metal.local", role: "EMPLOYEE" });
+      expect(response.status).toBe(201);
+      expect(response.body.user.username).toBe("new.person");
+      expect(response.body.user.email).toBe("new.person@metal.local");
+      expect(response.body.emailSent).toBe(true);
+      expect(response.body.temporaryPassword).toBeUndefined();
+    });
+
+    it("appends a numeric suffix when the generated username is taken", async () => {
+      mockPrisma.user.findFirst.mockImplementation(async ({ where }: { where: { username?: string; OR?: unknown } }) =>
+        where.username === "taken" ? { ...admin, username: "taken" } : null);
+      const response = await post({ fullName: "Taken Two", email: "taken@metal.local", role: "HR_MANAGER" });
+      expect(response.status).toBe(201);
+      expect(response.body.user.username).toBe("taken2");
+    });
+
+    it("returns the temporary password only when the e-mail could not be sent", async () => {
+      const spy = jest.spyOn(mailService, "sendWelcome").mockRejectedValueOnce(new Error("smtp down"));
+      const response = await post({ fullName: "No Mail", email: "no.mail@metal.local", role: "EMPLOYEE" });
+      expect(response.status).toBe(201);
+      expect(response.body.emailSent).toBe(false);
+      expect(typeof response.body.temporaryPassword).toBe("string");
+      spy.mockRestore();
+    });
+
+    it("unlocks a user and audits USER_UNLOCKED", async () => {
+      mockPrisma.user.findFirst.mockResolvedValue({ ...employeeUser, lockedUntil: new Date(Date.now() + 60_000) });
+      const response = await request(app).post("/api/v1/users/2/unlock").set("Authorization", `Bearer ${await tokenFor("admin")}`);
+      expect(response.status).toBe(200);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: { lockedUntil: null, failedLoginAttempts: 0 },
+      }));
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ action: "USER_UNLOCKED", entityId: "2" }),
+      }));
+    });
+
+    it("no longer exposes the /admin/users alias or resend-credentials", async () => {
+      const token = await tokenFor("admin");
+      expect((await request(app).get("/api/v1/admin/users").set("Authorization", `Bearer ${token}`)).status).toBe(404);
+      expect((await request(app).post("/api/v1/users/2/resend-credentials").set("Authorization", `Bearer ${token}`)).status).toBe(404);
     });
   });
 });

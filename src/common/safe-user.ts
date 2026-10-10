@@ -1,6 +1,8 @@
 import { Role } from "@prisma/client";
 
-export type SafeUser = {
+export type EmployeeRef = { id: number; matricule: string; firstName: string; lastName: string };
+
+export type SafeUserSource = {
   id: number;
   username: string;
   fullName: string;
@@ -9,10 +11,15 @@ export type SafeUser = {
   enabled: boolean;
   lastLoginAt: Date | null;
   mustChangePassword: boolean;
-  employeeId?: number | null;
+  lockedUntil: Date | null;
+  createdAt: Date;
+  employee?: EmployeeRef | null;
 };
 
-export const toSafeUser = (user: SafeUser): SafeUser => ({
+export type SafeUser = Required<Omit<SafeUserSource, "employee">> & { employee: EmployeeRef | null };
+
+/** The only shape in which users may leave the API (no hash, no token version, no counters). */
+export const toSafeUser = (user: SafeUserSource): SafeUser => ({
   id: user.id,
   username: user.username,
   fullName: user.fullName,
@@ -21,5 +28,9 @@ export const toSafeUser = (user: SafeUser): SafeUser => ({
   enabled: user.enabled,
   lastLoginAt: user.lastLoginAt,
   mustChangePassword: user.mustChangePassword,
-  ...(user.employeeId === undefined ? {} : { employeeId: user.employeeId }),
+  lockedUntil: user.lockedUntil,
+  createdAt: user.createdAt,
+  employee: user.employee
+    ? { id: user.employee.id, matricule: user.employee.matricule, firstName: user.employee.firstName, lastName: user.employee.lastName }
+    : null,
 });

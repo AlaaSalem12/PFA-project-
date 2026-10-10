@@ -46,7 +46,6 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1", organizationRouter);
 app.use("/api/v1/employees", employeeRouter);
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/admin/users", userRouter);
 app.use("/api/v1/machines", machineRouter);
 app.get("/api/v1/maintenance/overdue", authenticate, requirePasswordChange, maintenanceOverdueHandler);
 app.use("/api/v1/maintenance/plans", maintenancePlanRouter);

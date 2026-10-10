@@ -41,7 +41,11 @@ const resetCredentials = asyncHandler(async (req: AuthRequest, res) => {
   res.json(result);
 });
 userRouter.post("/:id/reset-password", validate({ params: userIdSchema }), resetCredentials);
-userRouter.post("/:id/resend-credentials", validate({ params: userIdSchema }), resetCredentials);
+userRouter.post("/:id/unlock", validate({ params: userIdSchema }), asyncHandler(async (req: AuthRequest, res) => {
+  const user = await service.unlock(Number(req.params.id));
+  await auditFrom(req, { action: "USER_UNLOCKED", entity: "User", entityId: user.id });
+  res.json(user);
+}));
 userRouter.delete("/:id", validate({ params: userIdSchema }), asyncHandler(async (req: AuthRequest, res) => {
   await service.remove(Number(req.params.id), req.user!.id);
   await auditFrom(req, { action: "USER_DELETED", entity: "User", entityId: Number(req.params.id) });
