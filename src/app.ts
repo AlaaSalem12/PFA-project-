@@ -34,7 +34,7 @@ app.use(cors({
   allowedHeaders: ["Authorization", "Content-Type"],
 }));
 app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, limit: env.NODE_ENV === "test" ? 10_000 : 200,
+  windowMs: 15 * 60 * 1000, limit: env.NODE_ENV === "test" ? 10_000 : 1000,
   standardHeaders: "draft-8", legacyHeaders: false, handler: rateLimitHandler,
 }));
 app.use(express.json());

@@ -65,6 +65,9 @@ class DevelopmentMailService implements MailService {
 
   async sendPasswordReset(input: { to: string; fullName: string; token: string }): Promise<boolean> {
     console.info(`[mail] password reset email queued for ${input.to}`);
+    if (env.NODE_ENV === "development") {
+      console.info(`[mail] DEV reset link: ${env.FRONTEND_URL}/reset-password?token=${input.token}`);
+    }
     return true;
   }
 }

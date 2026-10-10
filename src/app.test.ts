@@ -118,6 +118,16 @@ describe("API integration contracts", () => {
     expect(changed.status).toBe(204);
   });
 
+  it("logs in case-insensitively and reports locked accounts as 401 ACCOUNT_LOCKED", async () => {
+    const ok = await request(app).post("/api/v1/auth/login").send({ username: " ADMIN ", password: "Admin@123" });
+    expect(ok.status).toBe(200);
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ ...admin, lockedUntil: new Date(Date.now() + 60_000) });
+    const locked = await request(app).post("/api/v1/auth/login").send({ username: "admin", password: "Admin@123" });
+    expect(locked.status).toBe(401);
+    expect(locked.body.code).toBe("ACCOUNT_LOCKED");
+    expect(locked.body.message).toBe("Account temporarily locked. Try again later.");
+  });
+
   it("rejects invalid login and unauthenticated requests", async () => {
     expect((await request(app).post("/api/v1/auth/login").send({ username: "admin", password: "wrong" })).status).toBe(401);
     expect((await request(app).get("/api/v1/users")).status).toBe(401);

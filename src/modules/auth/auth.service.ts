@@ -43,11 +43,20 @@ const tokens = (user: TokenUser) => ({
 
 const hashToken = (token: string): string => createHash("sha256").update(token).digest("hex");
 
+// Constant bcrypt hash (cost 12) used to equalize timing for unknown users.
+const DUMMY_HASH = "$2b$12$DBg8r0wDlh1DA7qX37QmaOFDy.CWXc9h.qVwZ3uLI4uG7xW1xxxjy";
+
 export class AuthService {
   async login(username: string, password: string) {
     const user = await prisma.user.findUnique({ where: { username } });
-    if (!user || user.deletedAt || !user.enabled) throw new ApiError(401, "Invalid credentials");
-    if (user.lockedUntil && user.lockedUntil > new Date()) throw new ApiError(423, "Account temporarily locked");
+    if (!user || user.deletedAt || !user.enabled) {
+      await bcrypt.compare(password, DUMMY_HASH);
+      throw new ApiError(401, "Invalid credentials");
+    }
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      await bcrypt.compare(password, DUMMY_HASH);
+      throw new ApiError(401, "Account temporarily locked. Try again later.", [], "ACCOUNT_LOCKED");
+    }
 
     if (!(await bcrypt.compare(password, user.passwordHash))) {
       const attempts = user.failedLoginAttempts + 1;
@@ -80,11 +89,15 @@ export class AuthService {
       if (!user || user.deletedAt || !user.enabled || user.refreshTokenVersion !== payload.tokenVersion) {
         throw new ApiError(401, "Invalid or inactive account");
       }
+      const rotated = await prisma.user.update({
+        where: { id: user.id },
+        data: { refreshTokenVersion: { increment: 1 } },
+      });
       const userData: TokenUser = {
-        id: user.id, username: user.username, role: user.role, employeeId: user.employeeId,
-        tokenVersion: user.refreshTokenVersion, mustChangePassword: user.mustChangePassword,
+        id: rotated.id, username: rotated.username, role: rotated.role, employeeId: rotated.employeeId,
+        tokenVersion: rotated.refreshTokenVersion, mustChangePassword: rotated.mustChangePassword,
       };
-      return { ...tokens(userData), user: publicUser({ ...userData, ...user }) };
+      return { ...tokens(userData), user: publicUser({ ...userData, ...rotated }) };
     } catch (error) {
       if (error instanceof ApiError) throw error;
       throw new ApiError(401, "Invalid or expired refresh token");
@@ -92,13 +105,19 @@ export class AuthService {
   }
 
   async me(id: number) {
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user || user.deletedAt) throw new ApiError(404, "User not found");
-    return publicUser({
-      ...user,
-      tokenVersion: user.refreshTokenVersion,
-      mustChangePassword: user.mustChangePassword,
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { employee: { select: { id: true, matricule: true, firstName: true, lastName: true } } },
     });
+    if (!user || user.deletedAt) throw new ApiError(404, "User not found");
+    return {
+      ...publicUser({
+        ...user,
+        tokenVersion: user.refreshTokenVersion,
+        mustChangePassword: user.mustChangePassword,
+      }),
+      employee: user.employee,
+    };
   }
 
   async changePassword(id: number, currentPassword: string, newPassword: string) {
