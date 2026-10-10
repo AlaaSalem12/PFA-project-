@@ -5,7 +5,7 @@ import { prisma } from "../../config/prisma";
 import { pageResponse } from "../../common/pagination";
 import { asyncHandler } from "../../common/async-handler";
 import { ApiError } from "../../common/api-error";
-import { auditRequest } from "../../common/audit";
+import { auditFrom } from "../../common/audit";
 import { AuthRequest, authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
 
@@ -46,7 +46,7 @@ const findActive = async (id: number) => {
 };
 router.post("/", validate({ body: employeeBody }), asyncHandler(async (req: AuthRequest, res) => {
   const employee = await prisma.employee.create({ data: { ...req.body, createdBy: req.user!.username } });
-  await auditRequest(req, "CREATE", "Employee", employee.id, { matricule: employee.matricule });
+  await auditFrom(req, { action: "EMPLOYEE_CREATED", entity: "Employee", entityId: employee.id, metadata: { matricule: employee.matricule } });
   res.status(201).json(employee);
 }));
 router.get("/:id", validate({ params }), asyncHandler(async (req, res) => {
@@ -56,7 +56,7 @@ router.put("/:id", validate({ params, body: employeeBody.partial() }), asyncHand
   const id = Number(req.params.id);
   await findActive(id);
   const employee = await prisma.employee.update({ where: { id }, data: req.body });
-  await auditRequest(req, "UPDATE", "Employee", id, { fields: Object.keys(req.body) });
+  await auditFrom(req, { action: "EMPLOYEE_UPDATED", entity: "Employee", entityId: id, metadata: { fields: Object.keys(req.body) } });
   res.json(employee);
 }));
 router.delete("/:id", validate({ params }), asyncHandler(async (req: AuthRequest, res) => {
@@ -65,7 +65,7 @@ router.delete("/:id", validate({ params }), asyncHandler(async (req: AuthRequest
   const linkedUser = await prisma.user.findFirst({ where: { employeeId: id, deletedAt: null } });
   if (linkedUser) throw new ApiError(409, "Employee is linked to an active user account");
   await prisma.employee.update({ where: { id }, data: { deletedAt: new Date(), status: "TERMINATED" } });
-  await auditRequest(req, "DELETE", "Employee", id);
+  await auditFrom(req, { action: "EMPLOYEE_DELETED", entity: "Employee", entityId: id });
   res.status(204).send();
 }));
 export const employeeRouter = router;

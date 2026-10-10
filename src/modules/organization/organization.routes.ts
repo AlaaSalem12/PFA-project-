@@ -3,7 +3,7 @@ import { Role } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../../config/prisma";
 import { asyncHandler } from "../../common/async-handler";
-import { auditRequest } from "../../common/audit";
+import { auditFrom } from "../../common/audit";
 import { AuthRequest, authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
 
@@ -15,6 +15,7 @@ router.use(["/departments", "/positions"], authenticate, requirePasswordChange, 
 
 // Departments and positions share the same shape, so one registration covers both.
 const registerCatalog = (path: "departments" | "positions", entity: "Department" | "Position") => {
+  const prefix = entity.toUpperCase();
   const model = path === "departments" ? prisma.department : prisma.position;
   const delegate = model as unknown as {
     findMany: typeof prisma.department.findMany;
@@ -25,17 +26,17 @@ const registerCatalog = (path: "departments" | "positions", entity: "Department"
   router.get(`/${path}`, asyncHandler(async (_req, res) => res.json(await delegate.findMany({ orderBy: { name: "asc" } }))));
   router.post(`/${path}`, validate({ body }), asyncHandler(async (req: AuthRequest, res) => {
     const created = await delegate.create({ data: { ...req.body, createdBy: req.user!.username } });
-    await auditRequest(req, "CREATE", entity, created.id, { name: created.name });
+    await auditFrom(req, { action: `${prefix}_CREATED`, entity, entityId: created.id, metadata: { name: created.name } });
     res.status(201).json(created);
   }));
   router.put(`/${path}/:id`, validate({ params: id, body }), asyncHandler(async (req: AuthRequest, res) => {
     const updated = await delegate.update({ where: { id: Number(req.params.id) }, data: req.body });
-    await auditRequest(req, "UPDATE", entity, updated.id, { name: updated.name });
+    await auditFrom(req, { action: `${prefix}_UPDATED`, entity, entityId: updated.id, metadata: { name: updated.name } });
     res.json(updated);
   }));
   router.delete(`/${path}/:id`, validate({ params: id }), asyncHandler(async (req: AuthRequest, res) => {
     await delegate.delete({ where: { id: Number(req.params.id) } });
-    await auditRequest(req, "DELETE", entity, req.params.id as string);
+    await auditFrom(req, { action: `${prefix}_DELETED`, entity, entityId: req.params.id as string });
     res.status(204).send();
   }));
 };

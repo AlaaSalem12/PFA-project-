@@ -12,6 +12,9 @@ const querySchema = z.object({
   size: z.coerce.number().int().min(1).max(100).default(10),
   entity: z.string().optional(),
   action: z.string().optional(),
+  userId: z.coerce.number().int().positive().optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
 });
 export const auditRouter = Router();
 auditRouter.use(authenticate, requirePasswordChange, authorize(Role.ADMIN));
@@ -20,6 +23,8 @@ auditRouter.get("/", validate({ query: querySchema }), asyncHandler(async (req, 
   const where: Prisma.AuditLogWhereInput = {
     ...(query.entity ? { entity: query.entity } : {}),
     ...(query.action ? { action: query.action } : {}),
+    ...(query.userId ? { userId: query.userId } : {}),
+    ...(query.from || query.to ? { createdAt: { ...(query.from ? { gte: query.from } : {}), ...(query.to ? { lte: query.to } : {}) } } : {}),
   };
   const [content, total] = await prisma.$transaction([
     prisma.auditLog.findMany({ where, skip: query.page * query.size, take: query.size, orderBy: { createdAt: "desc" }, include: { user: { select: { id: true, username: true, fullName: true } } } }),

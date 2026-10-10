@@ -257,7 +257,7 @@ describe("API integration contracts", () => {
       .send({ username: "hr.new", fullName: "HR New", email: "hr.new@metal.local", role: "HR_MANAGER" });
     expect(created.status).toBe(201);
     expect(mockPrisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ action: "CREATE", entity: "User", userId: 1 }),
+      data: expect.objectContaining({ action: "USER_CREATED", entity: "User", userId: 1 }),
     }));
   });
 
