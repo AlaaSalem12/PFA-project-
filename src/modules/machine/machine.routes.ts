@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import { Role } from "@prisma/client";
 import { asyncHandler } from "../../common/async-handler";
+import { ApiError } from "../../common/api-error";
 import { auditRequest } from "../../common/audit";
 import { AuthRequest, authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
@@ -56,7 +57,7 @@ machineRouter.delete("/:id", authorize(Role.ADMIN), validate({ params: machineId
   res.status(204).send();
 }));
 machineRouter.post("/:id/image", authorize(Role.ADMIN), validate({ params: machineIdSchema }), upload.single("image"), asyncHandler(async (req: AuthRequest, res) => {
-  if (!req.file) { res.status(400).json({ message: "A JPEG, PNG, or WEBP image is required" }); return; }
+  if (!req.file) throw new ApiError(400, "A JPEG, PNG, or WEBP image is required", [], "VALIDATION_ERROR");
   const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
   const machine = await service.update(Number(req.params.id), { imageUrl });
   await auditRequest(req, "UPDATE_IMAGE", "Machine", machine.id);

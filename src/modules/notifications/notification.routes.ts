@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../config/prisma";
+import { ApiError } from "../../common/api-error";
 import { asyncHandler } from "../../common/async-handler";
 import { AuthRequest, authenticate, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
@@ -18,6 +19,6 @@ notificationRouter.patch("/:id/read", validate({ params: idSchema }), asyncHandl
     where: { id: Number(req.params.id), userId: req.user!.id },
     data: { readAt: new Date() },
   });
-  if (notification.count === 0) { res.status(404).json({ message: "Notification not found" }); return; }
+  if (notification.count === 0) throw new ApiError(404, "Notification not found", [], "NOT_FOUND");
   res.status(204).send();
 }));

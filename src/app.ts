@@ -4,7 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import morgan from "morgan";
 import { env } from "./config/env";
-import { errorHandler } from "./middlewares/error-handler";
+import { errorHandler, notFoundHandler } from "./middlewares/error-handler";
 import { authRouter } from "./modules/auth/auth.routes";
 import { organizationRouter } from "./modules/organization/organization.routes";
 import { employeeRouter } from "./modules/employee/employee.routes";
@@ -15,6 +15,7 @@ import { notificationRouter } from "./modules/notifications/notification.routes"
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { auditRouter } from "./modules/audit/audit.routes";
 import { maintenancePlanRouter, workOrderRouter } from "./modules/maintenance/maintenance.routes";
+import { rateLimitHandler } from "./common/rate-limit";
 import { ApiError } from "./common/api-error";
 
 export const app = express();
@@ -27,12 +28,15 @@ app.use(cors({
       callback(null, true);
       return;
     }
-    callback(new ApiError(403, "Origin is not allowed by CORS", [], "CORS_FORBIDDEN"));
+    callback(new ApiError(403, "Origin not allowed", [], "CORS_REJECTED"));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Authorization", "Content-Type"],
 }));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: env.NODE_ENV === "test" ? 10_000 : 200 }));
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000, limit: env.NODE_ENV === "test" ? 10_000 : 200,
+  standardHeaders: "draft-8", legacyHeaders: false, handler: rateLimitHandler,
+}));
 app.use(express.json());
 app.use(morgan("combined"));
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
@@ -48,4 +52,5 @@ app.use("/api/v1/work-orders", workOrderRouter);
 app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/admin/dashboard", dashboardRouter);
 app.use("/api/v1/admin/audit-logs", auditRouter);
+app.use(notFoundHandler);
 app.use(errorHandler);

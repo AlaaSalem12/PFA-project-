@@ -211,6 +211,21 @@ describe("API integration contracts", () => {
     expect(blocked.status).toBe(403);
   });
 
+  it("returns JSON 404 for unknown routes and 409 CONFLICT for duplicate user create", async () => {
+    const unknown = await request(app).get("/api/v1/nope");
+    expect(unknown.status).toBe(404);
+    expect(unknown.body).toMatchObject({ status: 404, error: "Not Found", code: "NOT_FOUND", path: "/api/v1/nope", fieldErrors: [] });
+
+    const token = await tokenFor("admin");
+    mockPrisma.user.create.mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError(
+      "Unique constraint failed", { code: "P2002", clientVersion: "6.19.3", meta: { target: ["email"] } },
+    ));
+    const dup = await request(app).post("/api/v1/users").set("Authorization", `Bearer ${token}`)
+      .send({ username: "dup.user", fullName: "Dup User", email: "dup@metal.local", role: "EMPLOYEE" });
+    expect(dup.status).toBe(409);
+    expect(dup.body).toMatchObject({ error: "Conflict", code: "CONFLICT", message: expect.stringMatching(/email/i) });
+  });
+
   it("does not let the organization router block machines for non-HR roles", async () => {
     const token = await tokenFor("employee");
     expect((await request(app).get("/api/v1/machines").set("Authorization", `Bearer ${token}`)).status).toBe(200);
