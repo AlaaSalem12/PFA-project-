@@ -15,7 +15,7 @@ import { authenticate, requirePasswordChange } from "./middlewares/auth";
 import { notificationRouter } from "./modules/notifications/notification.routes";
 import { dashboardRouter } from "./modules/dashboard/dashboard.routes";
 import { auditRouter } from "./modules/audit/audit.routes";
-import { maintenancePlanRouter, workOrderRouter } from "./modules/maintenance/maintenance.routes";
+import { workOrderRouter } from "./modules/work-order/work-order.routes";
 import { rateLimitHandler } from "./common/rate-limit";
 import { ApiError } from "./common/api-error";
 
@@ -49,7 +49,6 @@ app.use("/api/v1/employees", employeeRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/machines", machineRouter);
 app.get("/api/v1/maintenance/overdue", authenticate, requirePasswordChange, maintenanceOverdueHandler);
-app.use("/api/v1/maintenance/plans", maintenancePlanRouter);
 app.use("/api/v1/work-orders", workOrderRouter);
 app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/admin/dashboard", dashboardRouter);

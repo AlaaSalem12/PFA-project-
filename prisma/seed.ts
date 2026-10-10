@@ -7,6 +7,9 @@ import {
   NotificationType,
   PrismaClient,
   Role,
+  WorkOrderPriority,
+  WorkOrderStatus,
+  WorkOrderType,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -171,6 +174,32 @@ async function main(): Promise<void> {
       },
     });
     machines.set(code, { id: machine.id, status });
+  }
+
+  // Demo work orders, assigned to the demo maintenance technician (EMP-0003).
+  const technician = await prisma.employee.findUnique({ where: { matricule: "EMP-0003" } });
+  const workOrderData = [
+    ["CNC-001", WorkOrderType.PREVENTIVE, WorkOrderPriority.LOW, WorkOrderStatus.DONE, "Quarterly lubrication and spindle check", 4, 120, "Grease, filters", "Lubrication done, no anomaly"],
+    ["MILL-001", WorkOrderType.PREVENTIVE, WorkOrderPriority.MEDIUM, WorkOrderStatus.OPEN, "Replace coolant pump filter", 1, null, null, null],
+    ["PRESS-001", WorkOrderType.CORRECTIVE, WorkOrderPriority.HIGH, WorkOrderStatus.IN_PROGRESS, "Hydraulic seal leaking, replace seal kit", 2, null, "Seal kit HX-220", null],
+    ["FURN-001", WorkOrderType.CORRECTIVE, WorkOrderPriority.CRITICAL, WorkOrderStatus.OPEN, "Temperature sensor failure, furnace stopped", 0, null, null, null],
+    ["WELD-001", WorkOrderType.PREVENTIVE, WorkOrderPriority.LOW, WorkOrderStatus.IN_PROGRESS, "Calibrate welding robot torch", 1, null, null, null],
+    ["CRANE-001", WorkOrderType.CORRECTIVE, WorkOrderPriority.MEDIUM, WorkOrderStatus.DONE, "Replace worn hoist cable guide", 9, 340, "Cable guide, bolts", "Guide replaced and load tested"],
+  ] as const;
+  for (const [code, type, priority, status, description, openedDaysAgo, cost, partsUsed, resolution] of workOrderData) {
+    const machine = machines.get(code);
+    if (!machine) continue;
+    const existing = await prisma.workOrder.findFirst({ where: { machineId: machine.id, description } });
+    if (existing) continue;
+    await prisma.workOrder.create({
+      data: {
+        machineId: machine.id, type, priority, status, description,
+        assignedToId: technician?.id, createdById: admin.id,
+        openedAt: daysAgo(openedDaysAgo),
+        closedAt: status === WorkOrderStatus.DONE ? daysAgo(Math.max(openedDaysAgo - 1, 0)) : null,
+        cost, partsUsed, resolution,
+      },
+    });
   }
 
   const statusEvents = [

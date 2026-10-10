@@ -4,6 +4,7 @@ import { ApiError } from "../../common/api-error";
 import { pageResponse } from "../../common/pagination";
 import { toMachineDto, toMachineDtos } from "./machine.dto";
 import { removeMachineImage, saveMachineImage } from "./machine-image";
+import { toWorkOrderDto, workOrderInclude } from "../work-order/work-order.dto";
 
 const operatorSelect = { id: true, matricule: true, firstName: true, lastName: true } as const;
 
@@ -92,10 +93,9 @@ export class MachineService {
   async workOrders(id: number) {
     await this.find(id);
     const orders = await prisma.workOrder.findMany({
-      where: { machineId: id }, orderBy: { openedAt: "desc" }, take: 50,
-      include: { machine: { select: { id: true, code: true, name: true } }, assignedTo: { select: { id: true, firstName: true, lastName: true } } },
+      where: { machineId: id }, orderBy: { openedAt: "desc" }, take: 50, include: workOrderInclude,
     });
-    return orders.map((order) => ({ ...order, cost: order.cost === null ? null : Number(order.cost) }));
+    return orders.map(toWorkOrderDto);
   }
 
   async remove(id: number) {

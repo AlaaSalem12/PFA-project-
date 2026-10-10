@@ -64,6 +64,7 @@ model User {
   notifications Notification[] @relation("NotificationRecipient")
   auditLogs    AuditLog[] @relation("AuditActor")
   createdMachines Machine[] @relation("MachineCreatedBy")
+  createdWorkOrders WorkOrder[] @relation("WorkOrderCreatedBy")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   @@map("app_users")
@@ -201,6 +202,8 @@ enum NotificationType {
   MACHINE_BREAKDOWN
   MACHINE_OUT_OF_SERVICE
   PASSWORD_RESET
+  WORK_ORDER_ASSIGNED
+  MAINTENANCE_DUE
 }
 
 model Notification {
@@ -210,10 +213,12 @@ model Notification {
   title      String
   message    String
   machineId  Int?             @map("machine_id")
+  workOrderId Int?            @map("work_order_id")
   readAt     DateTime?        @map("read_at")
   createdAt  DateTime         @default(now()) @map("created_at")
   user       User             @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
   machine    Machine?         @relation(fields: [machineId], references: [id], onDelete: SetNull)
+  workOrder  WorkOrder?       @relation(fields: [workOrderId], references: [id], onDelete: SetNull)
   @@index([userId, readAt, createdAt])
 }
 
@@ -270,9 +275,15 @@ model WorkOrder {
   cost         Decimal?         @db.Decimal(12, 2)
   description  String?
   partsUsed    String?          @map("parts_used")
+  resolution   String?
+  createdById  Int?             @map("created_by_id")
   machine      Machine          @relation(fields: [machineId], references: [id])
   assignedTo   Employee?        @relation("AssignedWorkOrders", fields: [assignedToId], references: [id])
+  createdBy    User?            @relation("WorkOrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  notifications Notification[]
   createdAt    DateTime         @default(now()) @map("created_at")
   updatedAt    DateTime         @updatedAt @map("updated_at")
-  createdBy    String?          @map("created_by")
+  @@index([status])
+  @@index([machineId])
+  @@index([assignedToId])
 }
