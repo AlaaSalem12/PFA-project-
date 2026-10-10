@@ -9,10 +9,10 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (
-            /node_modules[\/](react|react-dom|react-router|react-router-dom|scheduler)[\/]/.test(id)
+            /node_modules[/](react|react-dom|react-router|react-router-dom|scheduler)[/]/.test(id)
           )
             return 'vendor-react';
-          if (/node_modules[\/]@tanstack[\/]/.test(id)) return 'vendor-query';
+          if (/node_modules[/]@tanstack[/]/.test(id)) return 'vendor-query';
           return undefined;
         },
       },
