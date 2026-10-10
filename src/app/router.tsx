@@ -7,6 +7,7 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { ForbiddenPage, NotFoundPage } from '../features/errors/ErrorPages';
 import { MachineCatalogPage } from '../features/machines/MachineCatalogPage';
 import { MachineDetailPage } from '../features/machines/MachineDetailPage';
+import { MachineFormPage } from '../features/machines/MachineFormPage';
 
 const LoginPage = lazy(() =>
   import('../features/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -54,8 +55,8 @@ export function AppRouter() {
             <Route path="/machines" element={<MachineCatalogPage />} />
             <Route path="/machines/:id" element={<MachineDetailPage />} />
             <Route element={<ProtectedRoute roles={['ADMIN']} />}>
-              <Route path="/machines/new" element={<MachineCatalogPage />} />
-              <Route path="/machines/:id/edit" element={<PlaceholderPage title="Edit machine" />} />
+              <Route path="/machines/new" element={<MachineFormPage />} />
+              <Route path="/machines/:id/edit" element={<MachineFormPage />} />
             </Route>
             <Route path="/work-orders" element={<PlaceholderPage title="Work orders" />} />
             <Route element={<ProtectedRoute roles={['ADMIN', 'HR_MANAGER']} />}>

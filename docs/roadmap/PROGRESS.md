@@ -43,3 +43,9 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - `api/users.api.ts` rewritten (list with all filters, get, create, update, setUserEnabled, resetUserPassword, unlockUser, removeUser, listEmployeeOptions). New `features/users/` (UsersPage, UserFormDialog, TemporaryPasswordDialog, roles.ts); route `/admin/users` now renders UsersPage; old AdministrationPage deleted.
 - Table: server pagination/sort, URL-state search/role/enabled filters, row menu with ConfirmDialog for disable/reset/delete; Disable/Reset/Delete hidden on own row; Unlock only when locked. Temporary password dialog (copy + warning) or "Credentials sent by email" toast.
 - Left: manual admin test not run; `ManagedUser` type in types/api.ts is now unused; users sortable columns assume server accepts fullName/username/role/lastLoginAt.
+
+## P1-15 — Machines UI
+- `machines.api.ts` typed (MachineDetail, MachineNote, MachineStatusChange) + uploadMachineImage, setMachineOperators, getMachineWorkOrders. Shared enums/transitions in `features/machines/constants.ts`.
+- Catalog: URL-state filters (debounced search + location, status, type), DataTable in table view, grid + MUI Pagination in card view, view choice in localStorage, images via assetUrl. New full-page `MachineFormPage` at `/machines/new` and `/machines/:id/edit` (ADMIN) with zod, server fieldErrors, image upload (immediate on edit, after create on new).
+- Detail: header with image/overdue badge, Edit/Delete (ConfirmDialog, server 409 message toasted), role-gated status dialog (OUT_OF_SERVICE exits ADMIN only), tabs Overview/History/Notes/Operators/Work orders ("Create work order" hidden: P1-17 missing).
+- Left: manual tests not run; last/next maintenance dates are sent as ISO instants from a date input (assumed backend accepts); no `/admin/machines` references were found in src.

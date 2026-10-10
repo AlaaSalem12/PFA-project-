@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -6,104 +6,219 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   InputAdornment,
   MenuItem,
+  Pagination,
   Stack,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from '@mui/material';
-import { Add, Search, ViewList, GridView, ArrowForward } from '@mui/icons-material';
+import type { GridColDef } from '@mui/x-data-grid';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import GridViewIcon from '@mui/icons-material/GridView';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { createMachine, listMachines } from '../../api/machines.api';
-import type { MachineStatus, MachineType } from '../../types/api';
-import { useAuthStore } from '../../store/authStore';
+import { Link, useNavigate } from 'react-router-dom';
+import { assetUrl } from '../../api/client';
+import { getErrorMessage } from '../../api/errors';
+import { listMachines } from '../../api/machines.api';
+import { DataTable } from '../../components/DataTable';
+import { EmptyState } from '../../components/EmptyState';
 import { PageHeader } from '../../components/PageHeader';
 import { StatusChip } from '../../components/StatusChip';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-const statuses: MachineStatus[] = [
-  'OPERATIONAL',
-  'SCHEDULED_MAINTENANCE',
-  'UNDER_MAINTENANCE',
-  'BREAKDOWN',
-  'OUT_OF_SERVICE',
-];
-const types: MachineType[] = [
-  'CNC',
-  'LATHE',
-  'MILLING',
-  'PRESS',
-  'WELDING_STATION',
-  'FURNACE',
-  'CRANE',
-  'CUTTING',
-  'OTHER',
-];
-const machineSchema = z.object({
-  name: z.string().min(2, 'Name is required'),
-  code: z.string().min(2, 'Code is required'),
-  type: z.enum(types),
-  location: z.string().min(2, 'Location is required'),
-});
-type MachineForm = z.infer<typeof machineSchema>;
-export function MachineCatalogPage() {
-  const admin = useAuthStore((state) => state.user?.role === 'ADMIN');
-  const [params] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<MachineStatus | ''>(
-    (params.get('status') as MachineStatus) || '',
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
+import { useUrlState } from '../../hooks/useUrlState';
+import { useAuthStore } from '../../store/authStore';
+import type { Machine } from '../../types/api';
+import { formatDate, formatEnum } from '../../utils/format';
+import { MACHINE_STATUSES, MACHINE_TYPES } from './constants';
+
+type ViewMode = 'cards' | 'table';
+const VIEW_KEY = 'metalworks-machines-view';
+
+function readView(): ViewMode {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'cards';
+  } catch {
+    return 'cards';
+  }
+}
+
+function MachineCard({ machine }: { machine: Machine }) {
+  const image = assetUrl(machine.imageUrl);
+  return (
+    <Card
+      component={Link}
+      to={`/machines/${machine.id}`}
+      sx={{
+        display: 'block',
+        textDecoration: 'none',
+        color: 'inherit',
+        height: '100%',
+        '&:hover': { borderColor: 'primary.main' },
+      }}
+    >
+      <Box
+        sx={{
+          height: 140,
+          bgcolor: 'action.hover',
+          display: 'grid',
+          placeItems: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {image ? (
+          <Box
+            component="img"
+            src={image}
+            alt={machine.name}
+            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <Typography color="text.secondary" variant="h3">
+            {machine.code.slice(0, 2)}
+          </Typography>
+        )}
+      </Box>
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" noWrap>
+              {machine.name}
+            </Typography>
+            <Typography color="text.secondary" variant="caption">
+              {machine.code} · {formatEnum(machine.type)}
+            </Typography>
+          </Box>
+          <StatusChip status={machine.maintenanceStatus} />
+        </Stack>
+        <Typography color="text.secondary" sx={{ mt: 2 }}>
+          {machine.location || machine.workshop || '—'}
+        </Typography>
+      </CardContent>
+    </Card>
   );
-  const [type, setType] = useState<MachineType | ''>('');
-  const [cards, setCards] = useState(false);
-  const form = useForm<MachineForm>({
-    resolver: zodResolver(machineSchema),
-    defaultValues: { name: '', code: '', type: 'CNC', location: '' },
-  });
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
-  const machines = useQuery({
-    queryKey: ['machines', search, status, type],
-    queryFn: () => listMachines({ search, status: status || undefined, type: type || undefined }),
-  });
-  const dialogOpen = admin && location.pathname === '/machines/new';
+}
+
+export function MachineCatalogPage() {
+  const navigate = useNavigate();
+  const isAdmin = useAuthStore((state) => state.user?.role === 'ADMIN');
+  const urlState = useUrlState({ defaultSize: 12, defaultSort: 'id,desc' });
+  const { search, setSearch, filters, setFilter, page, setPage } = urlState;
+
+  const [view, setView] = useState<ViewMode>(readView);
+  const [searchText, setSearchText] = useState(search);
+  const [locationText, setLocationText] = useState(filters.location ?? '');
+  const debouncedSearch = useDebouncedValue(searchText, 400);
+  const debouncedLocation = useDebouncedValue(locationText, 400);
+
   useEffect(() => {
-    if (dialogOpen) form.reset();
-  }, [dialogOpen, form]);
-  const submit = form.handleSubmit(async (values) => {
-    setSaving(true);
-    setSaveError('');
+    if (debouncedSearch !== search) setSearch(debouncedSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (debouncedLocation !== (filters.location ?? '')) setFilter('location', debouncedLocation);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedLocation]);
+
+  const changeView = (_: unknown, next: ViewMode | null) => {
+    if (!next) return;
+    setView(next);
     try {
-      await createMachine(values);
-      await machines.refetch();
-      navigate('/machines');
-    } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Machine could not be created.');
-    } finally {
-      setSaving(false);
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // storage unavailable: the choice just won't persist
     }
+  };
+
+  const machines = useQuery({
+    queryKey: ['machines', urlState.queryParams],
+    queryFn: () => listMachines(urlState.queryParams),
+    placeholderData: (previous) => previous,
   });
+
+  const columns = useMemo<GridColDef<Machine>[]>(
+    () => [
+      {
+        field: 'name',
+        headerName: 'Machine',
+        flex: 1.4,
+        minWidth: 220,
+        sortable: false,
+        renderCell: ({ row }) => (
+          <Box sx={{ py: 0.5, lineHeight: 1.3 }}>
+            <Typography variant="body2" fontWeight={600}>
+              {row.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {row.code}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        field: 'type',
+        headerName: 'Type',
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+        valueFormatter: (value: string) => formatEnum(value),
+      },
+      {
+        field: 'location',
+        headerName: 'Location',
+        flex: 1,
+        minWidth: 140,
+        sortable: false,
+        valueGetter: (_value, row) => row.location || row.workshop || '—',
+      },
+      {
+        field: 'maintenanceStatus',
+        headerName: 'Status',
+        flex: 1,
+        minWidth: 210,
+        sortable: false,
+        renderCell: ({ row }) => <StatusChip status={row.maintenanceStatus} />,
+      },
+      {
+        field: 'nextMaintenanceDueAt',
+        headerName: 'Next maintenance',
+        flex: 1,
+        minWidth: 150,
+        sortable: false,
+        valueFormatter: (value: string | null) => formatDate(value),
+      },
+    ],
+    [],
+  );
+
+  const rows = machines.data?.content ?? [];
+  const hasFilters = Boolean(search || filters.status || filters.type || filters.location);
+
+  const emptyState = (
+    <EmptyState
+      title="No machines found"
+      text={hasFilters ? 'No machine matches the selected filters.' : 'No machines registered yet.'}
+    />
+  );
+
   return (
     <Box sx={{ maxWidth: 1440, mx: 'auto', width: '100%' }}>
       <PageHeader
         title="Machines"
         description={
-          admin
+          isAdmin
             ? 'Keep your asset register accurate and actionable.'
             : 'Browse equipment and current maintenance status.'
         }
         action={
-          admin && (
-            <Button component={Link} to="/machines/new" startIcon={<Add />} variant="contained">
+          isAdmin && (
+            <Button component={Link} to="/machines/new" startIcon={<AddIcon />} variant="contained">
               Add machine
             </Button>
           )
@@ -113,211 +228,108 @@ export function MachineCatalogPage() {
         <TextField
           fullWidth
           placeholder="Search by code, name or serial number"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search />
-              </InputAdornment>
-            ),
+          value={searchText}
+          onChange={(event) => setSearchText(event.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            },
           }}
         />
         <TextField
           select
           label="Status"
-          value={status}
-          onChange={(e) => setStatus(e.target.value as MachineStatus)}
-          sx={{ minWidth: 190 }}
+          value={filters.status ?? ''}
+          onChange={(event) => setFilter('status', event.target.value)}
+          sx={{ minWidth: 200 }}
         >
           <MenuItem value="">All statuses</MenuItem>
-          {statuses.map((value) => (
+          {MACHINE_STATUSES.map((value) => (
             <MenuItem key={value} value={value}>
-              {value.replaceAll('_', ' ')}
+              {formatEnum(value)}
             </MenuItem>
           ))}
         </TextField>
         <TextField
           select
           label="Type"
-          value={type}
-          onChange={(e) => setType(e.target.value as MachineType)}
-          sx={{ minWidth: 160 }}
+          value={filters.type ?? ''}
+          onChange={(event) => setFilter('type', event.target.value)}
+          sx={{ minWidth: 170 }}
         >
           <MenuItem value="">All types</MenuItem>
-          {types.map((value) => (
+          {MACHINE_TYPES.map((value) => (
             <MenuItem key={value} value={value}>
-              {value.replaceAll('_', ' ')}
+              {formatEnum(value)}
             </MenuItem>
           ))}
         </TextField>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton
-            onClick={() => setCards(true)}
-            color={cards ? 'primary' : 'default'}
-            aria-label="Card view"
-          >
-            <GridView />
-          </IconButton>
-          <IconButton
-            onClick={() => setCards(false)}
-            color={!cards ? 'primary' : 'default'}
-            aria-label="Table view"
-          >
-            <ViewList />
-          </IconButton>
-        </Box>
+        <TextField
+          label="Location"
+          value={locationText}
+          onChange={(event) => setLocationText(event.target.value)}
+          sx={{ minWidth: 170 }}
+        />
+        <ToggleButtonGroup exclusive size="small" value={view} onChange={changeView}>
+          <ToggleButton value="cards" aria-label="Card view">
+            <GridViewIcon />
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="Table view">
+            <ViewListIcon />
+          </ToggleButton>
+        </ToggleButtonGroup>
       </Stack>
-      {machines.isLoading ? (
+
+      {machines.isError && <Alert severity="error">{getErrorMessage(machines.error)}</Alert>}
+
+      {!machines.isError && machines.isLoading && (
         <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 240 }}>
           <CircularProgress />
         </Box>
-      ) : machines.isError ? (
-        <Alert severity="error">Machines could not be loaded. Please retry.</Alert>
-      ) : machines.data?.content.length === 0 ? (
-        <Alert severity="info">No machines match the selected filters.</Alert>
-      ) : cards ? (
-        <Grid container spacing={2}>
-          {machines.data?.content.map((machine) => (
-            <Grid key={machine.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <Card
-                component={Link}
-                to={`/machines/${machine.id}`}
-                sx={{
-                  textDecoration: 'none',
-                  color: 'inherit',
-                  height: '100%',
-                  '&:hover': { borderColor: 'primary.main' },
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 120,
-                    bgcolor: 'action.hover',
-                    display: 'grid',
-                    placeItems: 'center',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {machine.imageUrl ? (
-                    <Box
-                      component="img"
-                      src={machine.imageUrl}
-                      alt=""
-                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <Typography color="text.secondary" variant="h3">
-                      {machine.code.slice(0, 2)}
-                    </Typography>
-                  )}
-                </Box>
-                <CardContent>
-                  <Stack direction="row" justifyContent="space-between" alignItems="start" gap={1}>
-                    <Box>
-                      <Typography variant="h6">{machine.name}</Typography>
-                      <Typography color="text.secondary" variant="caption">
-                        {machine.code} · {machine.type.replaceAll('_', ' ')}
-                      </Typography>
-                    </Box>
-                    <StatusChip status={machine.maintenanceStatus} />
-                  </Stack>
-                  <Typography color="text.secondary" sx={{ mt: 2 }}>
-                    {machine.location || machine.workshop || '—'}
-                  </Typography>
-                  <Button size="small" endIcon={<ArrowForward />} sx={{ mt: 1, px: 0 }}>
-                    View details
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Card>
-          <Box sx={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {['Machine', 'Type', 'Location', 'Status', 'Maintenance'].map((head) => (
-                    <th key={head} style={{ textAlign: 'left', padding: 16 }}>
-                      {head}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {machines.data?.content.map((machine) => (
-                  <tr
-                    key={machine.id}
-                    style={{ borderTop: '1px solid var(--mui-palette-divider)' }}
-                  >
-                    <td style={{ padding: 16 }}>
-                      <Link to={`/machines/${machine.id}`}>
-                        {machine.code} · {machine.name}
-                      </Link>
-                    </td>
-                    <td>{machine.type.replaceAll('_', ' ')}</td>
-                    <td>{machine.location || '—'}</td>
-                    <td>
-                      <StatusChip status={machine.maintenanceStatus} />
-                    </td>
-                    <td>
-                      {machine.nextMaintenanceDueAt
-                        ? new Date(machine.nextMaintenanceDueAt).toLocaleDateString()
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Box>
-        </Card>
       )}
-      <Dialog open={dialogOpen} onClose={() => navigate('/machines')} fullWidth maxWidth="sm">
-        <DialogTitle>Add machine</DialogTitle>
-        <DialogContent>
-          <Stack component="form" id="machine-form" onSubmit={submit} spacing={2} sx={{ pt: 1 }}>
-            <TextField
-              label="Machine name"
-              {...form.register('name')}
-              error={!!form.formState.errors.name}
-              helperText={form.formState.errors.name?.message}
-            />
-            <TextField
-              label="Code"
-              {...form.register('code')}
-              error={!!form.formState.errors.code}
-              helperText={form.formState.errors.code?.message}
-            />
-            <TextField
-              select
-              label="Type"
-              {...form.register('type')}
-              error={!!form.formState.errors.type}
-            >
-              {types.map((value) => (
-                <MenuItem key={value} value={value}>
-                  {value.replaceAll('_', ' ')}
-                </MenuItem>
+
+      {!machines.isError && !machines.isLoading && view === 'table' && (
+        <DataTable<Machine>
+          rows={rows}
+          rowCount={machines.data?.totalElements ?? 0}
+          loading={machines.isFetching}
+          columns={columns}
+          paginationModel={urlState.paginationModel}
+          onPaginationModelChange={urlState.setPaginationModel}
+          onRowClick={(row) => navigate(`/machines/${row.id}`)}
+          emptyState={emptyState}
+        />
+      )}
+
+      {!machines.isError && !machines.isLoading && view === 'cards' && (
+        <>
+          {rows.length === 0 ? (
+            emptyState
+          ) : (
+            <Grid container spacing={2}>
+              {rows.map((machine) => (
+                <Grid key={machine.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+                  <MachineCard machine={machine} />
+                </Grid>
               ))}
-            </TextField>
-            <TextField
-              label="Location"
-              {...form.register('location')}
-              error={!!form.formState.errors.location}
-              helperText={form.formState.errors.location?.message}
-            />
-            {saveError && <Alert severity="error">{saveError}</Alert>}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => navigate('/machines')}>Cancel</Button>
-          <Button type="submit" form="machine-form" variant="contained" disabled={saving}>
-            {saving ? 'Saving…' : 'Create machine'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </Grid>
+          )}
+          {(machines.data?.totalPages ?? 0) > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                count={machines.data?.totalPages ?? 1}
+                page={page + 1}
+                onChange={(_, value) => setPage(value - 1)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
+      )}
     </Box>
   );
 }

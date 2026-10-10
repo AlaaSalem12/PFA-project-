@@ -197,6 +197,24 @@ export interface Machine {
   updatedAt?: string;
 }
 
+export interface MachineOperator {
+  id: number;
+  matricule: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface MachineDetail extends Machine {
+  authorizedOperators: MachineOperator[];
+}
+
+export interface MachineNote {
+  id: number;
+  note: string;
+  createdAt: string;
+  createdBy: { fullName: string } | null;
+}
+
 export interface MachineQuery extends PagedQuery {
   status?: MachineStatus;
   type?: MachineType;
