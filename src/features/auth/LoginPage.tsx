@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Link, Paper, Stack, TextField, Typography } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -7,17 +7,20 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { login } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { getErrorMessage } from '../../api/errors';
 import type { ApiErrorResponse } from '../../types/api';
 
 const schema = z.object({
   username: z.string().min(1, 'Username is required'),
-  password: z.string().min(6, 'Password must contain at least 6 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 type LoginValues = z.infer<typeof schema>;
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = (location.state as { message?: string } | null)?.message;
   const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
   const { setSession, logout } = useAuthStore();
   useEffect(() => {
@@ -25,6 +28,7 @@ export function LoginPage() {
   }, [logout]);
   const mutation = useMutation({
     mutationFn: (values: LoginValues) => login(values.username, values.password),
+    meta: { silent: true },
     onError: (error) => {
       if (axios.isAxiosError<ApiErrorResponse>(error) && error.response?.status === 429) {
         const retryAfter = Number(error.response.headers['retry-after']);
@@ -36,14 +40,9 @@ export function LoginPage() {
     onSuccess: (data) => {
       setRateLimitSeconds(0);
       setSession(data.token, data.refreshToken, data.user);
-      navigate(
-        data.user.mustChangePassword
-          ? '/change-password'
-          : data.user.role === 'ADMIN'
-            ? '/dashboard'
-            : '/machines',
-        { replace: true },
-      );
+      navigate(data.user.mustChangePassword ? '/change-password' : '/dashboard', {
+        replace: true,
+      });
     },
   });
   const rateLimitActive = rateLimitSeconds > 0;
@@ -54,12 +53,15 @@ export function LoginPage() {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [rateLimitActive]);
+  const serverCode = axios.isAxiosError<ApiErrorResponse>(mutation.error)
+    ? mutation.error.response?.data?.code
+    : undefined;
   const errorMessage =
     axios.isAxiosError<ApiErrorResponse>(mutation.error) && mutation.error.response?.status === 429
       ? `Too many sign-in attempts. Try again in ${Math.ceil(rateLimitSeconds / 60)} minute(s).`
-      : mutation.error instanceof Error
-        ? mutation.error.message
-        : 'Unable to sign in. Check your credentials.';
+      : serverCode === 'ACCOUNT_LOCKED'
+        ? getErrorMessage(mutation.error, 'Your account is temporarily locked. Try again later.')
+        : getErrorMessage(mutation.error, 'Unable to sign in. Check your credentials.');
   const {
     register,
     handleSubmit,
@@ -122,6 +124,11 @@ export function LoginPage() {
           <Typography color="text.secondary" variant="body2" mt={1} mb={3}>
             Access your operational dashboard and team tools.
           </Typography>
+          {successMessage && !mutation.isError && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {successMessage}
+            </Alert>
+          )}
           {mutation.isError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {errorMessage}
@@ -145,6 +152,15 @@ export function LoginPage() {
               error={!!errors.password}
               helperText={errors.password?.message}
             />
+            <Link
+              component={RouterLink}
+              to="/forgot-password"
+              variant="body2"
+              underline="hover"
+              sx={{ alignSelf: 'flex-end' }}
+            >
+              Forgot password?
+            </Link>
             <Button
               type="submit"
               variant="contained"

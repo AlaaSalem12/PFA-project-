@@ -31,3 +31,10 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - New `src/app/navigation.ts` (role-filtered groups, path-to-label breadcrumbs); AppLayout rewritten (no fake Search/Workspace); styled 403/404 in `src/features/errors/ErrorPages.tsx` inside the layout.
 - Routes: /dashboard, /machines (+/new, /:id, /:id/edit admin only), /work-orders, /hr/employees, /hr/organization, /admin/users, /admin/audit-logs; `/` redirects to /dashboard. Removed /admin/machines, /admin/people, /admin/dashboard.
 - Left: "Maintenance plans" nav item not added (P1-08 route unknown); /machines/:id/edit and the new pages are placeholders; /dashboard calls the admin dashboard API, so non-admins will see an error until P1-14.
+
+## P1-13 — Auth pages
+- Login: server `getErrorMessage` (special text for 429 countdown / ACCOUNT_LOCKED), password only required, shows `location.state.message`, "Forgot password?" link, redirects to /dashboard or /change-password.
+- New public routes `/forgot-password` (ForgotPasswordPage) and `/reset-password?token=` (ResetPasswordPage); api `forgotPassword`/`resetPassword` in auth.api.ts.
+- New `components/PasswordStrength.tsx` + `utils/passwordPolicy.ts` (rules + zod `newPasswordSchema`), used in reset and change-password forms; change-password shows server error.
+- Profile uses `GET /auth/me` (useQuery): email, formatted role, last login, linked employee; hardcoded "Active" removed.
+- Left: the employee link goes to `/hr/employees/:id` (shown only for ADMIN/HR_MANAGER), which is not a route yet; EmployeeRef has no department so it is not shown. Manual forgot/reset flow not run.

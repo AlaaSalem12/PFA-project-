@@ -1,16 +1,19 @@
 import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { changePassword } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
+import { getErrorMessage } from '../../api/errors';
+import { PasswordStrength } from '../../components/PasswordStrength';
+import { newPasswordSchema } from '../../utils/passwordPolicy';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const schema = z
   .object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'Use at least 8 characters'),
+    newPassword: newPasswordSchema,
     confirmPassword: z.string().min(1, 'Confirm the new password'),
   })
   .refine((values) => values.newPassword === values.confirmPassword, {
@@ -24,6 +27,7 @@ export function ChangePasswordPage() {
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
   const mutation = useMutation({
+    meta: { silent: true },
     mutationFn: (values: Values) => changePassword(values.currentPassword, values.newPassword),
     onSuccess: () => {
       logout();
@@ -36,8 +40,10 @@ export function ChangePasswordPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
-  } = useForm<Values>({ resolver: zodResolver(schema) });
+  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { newPassword: '' } });
+  const newPassword = useWatch({ control, name: 'newPassword' }) ?? '';
   return (
     <Box maxWidth={540} mx="auto">
       <Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3}>
@@ -49,11 +55,11 @@ export function ChangePasswordPage() {
       <Typography color="text.secondary" mt={1} mb={3}>
         {location.state?.forced
           ? 'Your administrator provided a temporary password. Set a new password to continue.'
-          : 'Use a unique password with at least 8 characters.'}
+          : 'Use a unique password that meets the requirements below.'}
       </Typography>
       {mutation.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          The password could not be changed.
+          {getErrorMessage(mutation.error, 'The password could not be changed.')}
         </Alert>
       )}
       <Card>
@@ -77,6 +83,7 @@ export function ChangePasswordPage() {
               error={!!errors.newPassword}
               helperText={errors.newPassword?.message}
             />
+            <PasswordStrength password={newPassword} />
             <TextField
               label="Confirm new password"
               type="password"
