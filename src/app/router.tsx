@@ -4,17 +4,55 @@ import { CircularProgress } from '@mui/material';
 import { AppLayout } from '../components/layout/AppLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { ForbiddenPage, NotFoundPage } from '../features/errors/ErrorPages';
-import { MachineCatalogPage } from '../features/machines/MachineCatalogPage';
-import { MachineDetailPage } from '../features/machines/MachineDetailPage';
-import { MachineFormPage } from '../features/machines/MachineFormPage';
-import { EmployeeDetailPage } from '../features/hr/EmployeeDetailPage';
-import { EmployeeFormPage } from '../features/hr/EmployeeFormPage';
-import { EmployeesPage } from '../features/hr/EmployeesPage';
-import { OrganizationPage } from '../features/hr/OrganizationPage';
-import { MaintenancePlansPage } from '../features/maintenance-plans/MaintenancePlansPage';
-import { WorkOrderDetailPage } from '../features/work-orders/WorkOrderDetailPage';
-import { WorkOrdersPage } from '../features/work-orders/WorkOrdersPage';
 
+const MachineCatalogPage = lazy(() =>
+  import('../features/machines/MachineCatalogPage').then((module) => ({
+    default: module.MachineCatalogPage,
+  })),
+);
+const MachineDetailPage = lazy(() =>
+  import('../features/machines/MachineDetailPage').then((module) => ({
+    default: module.MachineDetailPage,
+  })),
+);
+const MachineFormPage = lazy(() =>
+  import('../features/machines/MachineFormPage').then((module) => ({
+    default: module.MachineFormPage,
+  })),
+);
+const EmployeeDetailPage = lazy(() =>
+  import('../features/hr/EmployeeDetailPage').then((module) => ({
+    default: module.EmployeeDetailPage,
+  })),
+);
+const EmployeeFormPage = lazy(() =>
+  import('../features/hr/EmployeeFormPage').then((module) => ({
+    default: module.EmployeeFormPage,
+  })),
+);
+const EmployeesPage = lazy(() =>
+  import('../features/hr/EmployeesPage').then((module) => ({ default: module.EmployeesPage })),
+);
+const OrganizationPage = lazy(() =>
+  import('../features/hr/OrganizationPage').then((module) => ({
+    default: module.OrganizationPage,
+  })),
+);
+const MaintenancePlansPage = lazy(() =>
+  import('../features/maintenance-plans/MaintenancePlansPage').then((module) => ({
+    default: module.MaintenancePlansPage,
+  })),
+);
+const WorkOrderDetailPage = lazy(() =>
+  import('../features/work-orders/WorkOrderDetailPage').then((module) => ({
+    default: module.WorkOrderDetailPage,
+  })),
+);
+const WorkOrdersPage = lazy(() =>
+  import('../features/work-orders/WorkOrdersPage').then((module) => ({
+    default: module.WorkOrdersPage,
+  })),
+);
 const LoginPage = lazy(() =>
   import('../features/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
 );
