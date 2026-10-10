@@ -1,8 +1,72 @@
-import { Alert, Box, Card, CircularProgress, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Card,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { listAuditLogs } from '../../api/audit.api';
 import { PageHeader } from '../../components/PageHeader';
 export function AuditLogPage() {
   const query = useQuery({ queryKey: ['audit-logs'], queryFn: () => listAuditLogs() });
-  return <Box><PageHeader title="Audit log" description="A transparent record of changes made across MetalWorks." />{query.isLoading ? <CircularProgress /> : query.isError ? <Alert severity="error">Audit activity could not be loaded.</Alert> : <Card sx={{ overflow: 'hidden' }}><Table size="small"><TableHead><TableRow><TableCell>Action</TableCell><TableCell>Entity</TableCell><TableCell>User</TableCell><TableCell>Date</TableCell></TableRow></TableHead><TableBody>{query.data?.content.map((log) => <TableRow key={log.id} hover><TableCell><Typography fontWeight={700}>{log.action.replaceAll('_', ' ')}</Typography>{log.details && <Typography variant="caption" color="text.secondary">{log.details}</Typography>}</TableCell><TableCell>{log.entity}{log.entityId ? ` #${log.entityId}` : ''}</TableCell><TableCell>{log.user?.fullName || 'System'}</TableCell><TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell></TableRow>)}</TableBody></Table>{query.data?.content.length === 0 && <Box sx={{ p: 8, textAlign: 'center' }}><Typography variant="h6">No activity yet</Typography><Typography color="text.secondary">Administrative actions will appear here.</Typography></Box>}</Card>}</Box>;
+  return (
+    <Box>
+      <PageHeader
+        title="Audit log"
+        description="A transparent record of changes made across MetalWorks."
+      />
+      {query.isLoading ? (
+        <CircularProgress />
+      ) : query.isError ? (
+        <Alert severity="error">Audit activity could not be loaded.</Alert>
+      ) : (
+        <Card sx={{ overflow: 'hidden' }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Action</TableCell>
+                <TableCell>Entity</TableCell>
+                <TableCell>User</TableCell>
+                <TableCell>Date</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {query.data?.content.map((log) => (
+                <TableRow key={log.id} hover>
+                  <TableCell>
+                    <Typography fontWeight={700}>{log.action.replaceAll('_', ' ')}</Typography>
+                    {log.details && (
+                      <Typography variant="caption" color="text.secondary">
+                        {log.details}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {log.entity}
+                    {log.entityId ? ` #${log.entityId}` : ''}
+                  </TableCell>
+                  <TableCell>{log.user?.fullName || 'System'}</TableCell>
+                  <TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          {query.data?.content.length === 0 && (
+            <Box sx={{ p: 8, textAlign: 'center' }}>
+              <Typography variant="h6">No activity yet</Typography>
+              <Typography color="text.secondary">
+                Administrative actions will appear here.
+              </Typography>
+            </Box>
+          )}
+        </Card>
+      )}
+    </Box>
+  );
 }

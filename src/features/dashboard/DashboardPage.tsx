@@ -92,14 +92,14 @@ export function DashboardPage() {
       value: machines.total,
       icon: <BuildOutlined />,
       note: `${machines.total ? Math.round(((machines.total - machines.machinesInBreakdown.length) / machines.total) * 100) : 0}% operational uptime`,
-      href: '/admin/machines',
+      href: '/machines',
     },
     {
       label: 'In breakdown',
       value: machines.machinesInBreakdown.length,
       icon: <WarningAmberOutlined />,
       note: machines.machinesInBreakdown.length ? 'Requires an owner' : 'All clear',
-      href: '/admin/machines?status=BREAKDOWN',
+      href: '/machines?status=BREAKDOWN',
     },
   ];
   return (
@@ -115,12 +115,7 @@ export function DashboardPage() {
         action={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined">Customize</Button>
-            <Button
-              component={Link}
-              to="/admin/machines/new"
-              variant="contained"
-              startIcon={<Add />}
-            >
+            <Button component={Link} to="/machines/new" variant="contained" startIcon={<Add />}>
               Add machine
             </Button>
           </Stack>
@@ -282,7 +277,7 @@ export function DashboardPage() {
                     Items that need an owner
                   </Typography>
                 </Box>
-                <MuiLink component={Link} to="/admin/machines" underline="none" fontWeight={700}>
+                <MuiLink component={Link} to="/machines" underline="none" fontWeight={700}>
                   View all <ArrowOutward fontSize="small" />
                 </MuiLink>
               </Stack>

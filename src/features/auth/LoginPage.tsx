@@ -10,7 +10,10 @@ import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import type { ApiErrorResponse } from '../../types/api';
 
-const schema = z.object({ username: z.string().min(1, 'Username is required'), password: z.string().min(6, 'Password must contain at least 6 characters') });
+const schema = z.object({
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(6, 'Password must contain at least 6 characters'),
+});
 type LoginValues = z.infer<typeof schema>;
 
 export function LoginPage() {
@@ -33,7 +36,14 @@ export function LoginPage() {
     onSuccess: (data) => {
       setRateLimitSeconds(0);
       setSession(data.token, data.refreshToken, data.user);
-      navigate(data.user.mustChangePassword ? '/change-password' : data.user.role === 'ADMIN' ? '/admin/dashboard' : '/machines', { replace: true });
+      navigate(
+        data.user.mustChangePassword
+          ? '/change-password'
+          : data.user.role === 'ADMIN'
+            ? '/dashboard'
+            : '/machines',
+        { replace: true },
+      );
     },
   });
   const rateLimitActive = rateLimitSeconds > 0;
@@ -44,12 +54,122 @@ export function LoginPage() {
     }, 1000);
     return () => window.clearInterval(timer);
   }, [rateLimitActive]);
-  const errorMessage = axios.isAxiosError<ApiErrorResponse>(mutation.error) && mutation.error.response?.status === 429
-    ? `Too many sign-in attempts. Try again in ${Math.ceil(rateLimitSeconds / 60)} minute(s).`
-    : mutation.error instanceof Error ? mutation.error.message : 'Unable to sign in. Check your credentials.';
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({ resolver: zodResolver(schema) });
-  return <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { md: '1.15fr .85fr' } }}>
-    <Box sx={{ display: { xs: 'none', md: 'flex' }, p: 10, alignItems: 'center', position: 'relative', overflow: 'hidden', bgcolor: '#142832', color: 'white', background: 'linear-gradient(135deg,#102431,#1e4d5a)' }}><Box sx={{ maxWidth: 520 }}><Typography fontWeight={900} letterSpacing={3}>▰ METALWORKS</Typography><Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3} mt={8}>INDUSTRIAL OPERATIONS PLATFORM</Typography><Typography variant="h1" sx={{ mt: 2, fontSize: 'clamp(42px,5vw,74px)', lineHeight: .98 }}>Built for the<br /><em style={{ color: '#bcd5da' }}>work that matters.</em></Typography><Typography color="#a6c0c8" mt={3} maxWidth={380}>One connected workspace for people, production and performance across your industrial operations.</Typography></Box></Box>
-    <Box sx={{ display: 'grid', placeItems: 'center', p: 4, bgcolor: 'background.default' }}><Paper elevation={0} sx={{ p: { xs: 0, sm: 3 }, width: '100%', maxWidth: 400, bgcolor: 'transparent' }}><Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3}>WELCOME BACK</Typography><Typography variant="h4" mt={1} fontWeight={800}>Sign in to your workspace</Typography><Typography color="text.secondary" variant="body2" mt={1} mb={3}>Access your operational dashboard and team tools.</Typography>{mutation.isError && <Alert severity="error" sx={{ mb: 2 }}>{errorMessage}</Alert>}<Stack component="form" onSubmit={handleSubmit((values) => mutation.mutate(values))} spacing={2}><TextField label="Username" {...register('username')} error={!!errors.username} helperText={errors.username?.message} /><TextField label="Password" type="password" {...register('password')} error={!!errors.password} helperText={errors.password?.message} /><Button type="submit" variant="contained" size="large" disabled={mutation.isPending || rateLimitSeconds > 0}> {mutation.isPending ? 'Signing in…' : rateLimitSeconds > 0 ? `Try again in ${rateLimitSeconds}s` : 'Sign in →'} </Button></Stack><Typography variant="caption" color="text.secondary" display="block" textAlign="center" mt={5}>▣ Secure access · METALWORKS enterprise network</Typography></Paper></Box>
-  </Box>;
+  const errorMessage =
+    axios.isAxiosError<ApiErrorResponse>(mutation.error) && mutation.error.response?.status === 429
+      ? `Too many sign-in attempts. Try again in ${Math.ceil(rateLimitSeconds / 60)} minute(s).`
+      : mutation.error instanceof Error
+        ? mutation.error.message
+        : 'Unable to sign in. Check your credentials.';
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginValues>({ resolver: zodResolver(schema) });
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { md: '1.15fr .85fr' } }}>
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          p: 10,
+          alignItems: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'common.white',
+          background: (theme) =>
+            `linear-gradient(135deg, ${(theme.vars || theme).palette.primary.dark}, ${(theme.vars || theme).palette.primary.main})`,
+        }}
+      >
+        <Box sx={{ maxWidth: 520 }}>
+          <Typography fontWeight={900} letterSpacing={3}>
+            ▰ METALWORKS
+          </Typography>
+          <Typography
+            color="secondary.main"
+            fontSize={10}
+            fontWeight={800}
+            letterSpacing={3}
+            mt={8}
+          >
+            INDUSTRIAL OPERATIONS PLATFORM
+          </Typography>
+          <Typography
+            variant="h1"
+            sx={{ mt: 2, fontSize: 'clamp(42px,5vw,74px)', lineHeight: 0.98 }}
+          >
+            Built for the
+            <br />
+            <Box component="em" sx={{ color: 'secondary.main' }}>
+              work that matters.
+            </Box>
+          </Typography>
+          <Typography sx={{ opacity: 0.8 }} mt={3} maxWidth={380}>
+            One connected workspace for people, production and performance across your industrial
+            operations.
+          </Typography>
+        </Box>
+      </Box>
+      <Box sx={{ display: 'grid', placeItems: 'center', p: 4, bgcolor: 'background.default' }}>
+        <Paper
+          elevation={0}
+          sx={{ p: { xs: 0, sm: 3 }, width: '100%', maxWidth: 400, bgcolor: 'transparent' }}
+        >
+          <Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3}>
+            WELCOME BACK
+          </Typography>
+          <Typography variant="h4" mt={1} fontWeight={800}>
+            Sign in to your workspace
+          </Typography>
+          <Typography color="text.secondary" variant="body2" mt={1} mb={3}>
+            Access your operational dashboard and team tools.
+          </Typography>
+          {mutation.isError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errorMessage}
+            </Alert>
+          )}
+          <Stack
+            component="form"
+            onSubmit={handleSubmit((values) => mutation.mutate(values))}
+            spacing={2}
+          >
+            <TextField
+              label="Username"
+              {...register('username')}
+              error={!!errors.username}
+              helperText={errors.username?.message}
+            />
+            <TextField
+              label="Password"
+              type="password"
+              {...register('password')}
+              error={!!errors.password}
+              helperText={errors.password?.message}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={mutation.isPending || rateLimitSeconds > 0}
+            >
+              {' '}
+              {mutation.isPending
+                ? 'Signing in…'
+                : rateLimitSeconds > 0
+                  ? `Try again in ${rateLimitSeconds}s`
+                  : 'Sign in →'}{' '}
+            </Button>
+          </Stack>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
+            textAlign="center"
+            mt={5}
+          >
+            ▣ Secure access · METALWORKS enterprise network
+          </Typography>
+        </Paper>
+      </Box>
+    </Box>
+  );
 }

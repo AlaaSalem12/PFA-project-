@@ -1,7 +1,6 @@
 import { MutationCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-import { createAppTheme } from './theme';
-import { useUiStore } from '../store/uiStore';
+import { theme } from './theme';
 import { toast } from '../store/toastStore';
 import { getErrorMessage } from '../api/errors';
 import { ToastHost } from '../components/ToastHost';
@@ -27,10 +26,9 @@ const queryClient = new QueryClient({
 });
 
 export function AppProviders({ children }: { children: ReactNode }) {
-  const dark = useUiStore((state) => state.dark);
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={createAppTheme(dark)}>
+      <ThemeProvider theme={theme} modeStorageKey="metalworks-theme" defaultMode="system">
         <CssBaseline />
         {children}
         <ToastHost />

@@ -24,3 +24,10 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - New shared components: DataTable (`@mui/x-data-grid@^8`, server mode), ConfirmDialog, EmptyState, FormDialog, RoleGate. Hooks: `useDebouncedValue`, `useUrlState` (includes DataGrid pagination/sort adapters). `utils/format.ts`.
 - `types/api.ts` aligned with contract §0–§7 (ApiErrorResponse w/ fieldErrors, SafeUser, Page, Employee, Department, Position, WorkOrder, Notification, *Query types). DashboardPage touched: null `fromStatus` handled, reformatted, hex colors → theme.
 - Left: existing api files (notifications/users/machines) still use old signatures; manual two-tab refresh test not run. LoginPage still has its own 429 handling (could use getErrorMessage).
+
+## P1-12 — Theme and layout pass
+- Theme: cssVariables + light/dark colorSchemes (tokens surface.subtle, brand.soft, status.<MachineStatus>), Inter loaded in index.html, color scheme persisted via useColorScheme (`dark` removed from uiStore, storage key `metalworks-theme`).
+- Hex literals removed from src/components and src/features; StatusChip uses status tokens.
+- New `src/app/navigation.ts` (role-filtered groups, path-to-label breadcrumbs); AppLayout rewritten (no fake Search/Workspace); styled 403/404 in `src/features/errors/ErrorPages.tsx` inside the layout.
+- Routes: /dashboard, /machines (+/new, /:id, /:id/edit admin only), /work-orders, /hr/employees, /hr/organization, /admin/users, /admin/audit-logs; `/` redirects to /dashboard. Removed /admin/machines, /admin/people, /admin/dashboard.
+- Left: "Maintenance plans" nav item not added (P1-08 route unknown); /machines/:id/edit and the new pages are placeholders; /dashboard calls the admin dashboard API, so non-admins will see an error until P1-14.

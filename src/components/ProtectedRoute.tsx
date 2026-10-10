@@ -15,14 +15,19 @@ export function ProtectedRoute({ roles }: { roles?: UserRole[] }) {
   useEffect(() => {
     if (!shouldCheckSession) return;
     let active = true;
-    void getCurrentUser().then((currentUser) => {
-      if (active) updateUser(currentUser);
-    }).catch(() => {
-      if (active) logout();
-    }).finally(() => {
-      if (active) setSessionChecked(true);
-    });
-    return () => { active = false; };
+    void getCurrentUser()
+      .then((currentUser) => {
+        if (active) updateUser(currentUser);
+      })
+      .catch(() => {
+        if (active) logout();
+      })
+      .finally(() => {
+        if (active) setSessionChecked(true);
+      });
+    return () => {
+      active = false;
+    };
   }, [logout, shouldCheckSession, updateUser]);
   if (!token) return <Navigate to="/login" replace />;
   if (!sessionChecked) return <CircularProgress />;
