@@ -1,4 +1,12 @@
 import { apiClient } from './client';
-import type { Notification } from '../types/api';
-export const listNotifications = () => apiClient.get<Notification[]>('/notifications').then((r) => r.data);
+import type { Notification, NotificationQuery, Page } from '../types/api';
+
+export const listNotifications = (query: NotificationQuery = {}) =>
+  apiClient.get<Page<Notification>>('/notifications', { params: query }).then((r) => r.data);
+
+export const getUnreadCount = () =>
+  apiClient.get<{ count: number }>('/notifications/unread-count').then((r) => r.data.count);
+
 export const markNotificationRead = (id: number) => apiClient.patch(`/notifications/${id}/read`);
+
+export const markAllNotificationsRead = () => apiClient.patch('/notifications/read-all');

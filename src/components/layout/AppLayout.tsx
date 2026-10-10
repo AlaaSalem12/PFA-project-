@@ -1,17 +1,8 @@
 import { useState } from 'react';
-import {
-  ChevronLeft,
-  ChevronRight,
-  DarkMode,
-  LightMode,
-  Logout,
-  Menu,
-  Notifications,
-} from '@mui/icons-material';
+import { ChevronLeft, ChevronRight, DarkMode, LightMode, Logout, Menu } from '@mui/icons-material';
 import {
   AppBar,
   Avatar,
-  Badge,
   Box,
   Divider,
   Drawer,
@@ -27,6 +18,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NotificationBell } from '../NotificationBell';
 import { useAuthStore } from '../../store/authStore';
 import { useUiStore } from '../../store/uiStore';
 import { getBreadcrumbs, getVisibleNavGroups } from '../../app/navigation';
@@ -270,11 +262,7 @@ export function AppLayout() {
             <IconButton onClick={() => setMode(dark ? 'light' : 'dark')} aria-label="Toggle theme">
               {dark ? <LightMode /> : <DarkMode />}
             </IconButton>
-            <IconButton aria-label="Notifications">
-              <Badge color="secondary" variant="dot">
-                <Notifications />
-              </Badge>
-            </IconButton>
+            <NotificationBell />
             <IconButton onClick={() => navigate('/profile')} aria-label="Profile">
               <Avatar
                 sx={{

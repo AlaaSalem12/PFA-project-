@@ -309,6 +309,16 @@ export interface DashboardData {
     recentLogins: Array<{ id: number; username: string; fullName: string; lastLoginAt: string }>;
     recentlyCreated: Array<{ id: number; username: string; fullName: string; createdAt: string }>;
   };
+  workOrders: {
+    open: number;
+    inProgress: number;
+    doneThisMonth: number;
+    byPriority: Array<{ priority: WorkOrderPriority; count: number }>;
+  };
+  employees: {
+    total: number;
+    byDepartment: Array<{ department: string; count: number }>;
+  };
   machines: {
     total: number;
     byStatus: Array<{ maintenanceStatus: MachineStatus; _count: { _all: number } }>;
@@ -324,4 +334,12 @@ export interface DashboardData {
       changedBy: { fullName: string };
     }>;
   };
+}
+
+export interface MyDashboardData {
+  myOpenWorkOrders: WorkOrder[];
+  machinesInBreakdown: number;
+  overdueMaintenance: number;
+  unreadNotifications: number;
+  hr?: { employees: number; onLeave: number };
 }

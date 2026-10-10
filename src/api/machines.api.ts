@@ -62,3 +62,6 @@ export const setMachineOperators = (id: number, employeeIds: number[]) =>
 
 export const getMachineWorkOrders = (id: number) =>
   apiClient.get<WorkOrder[]>(`/machines/${id}/work-orders`).then((r) => r.data);
+
+export const getOverdueMachines = () =>
+  apiClient.get<Machine[]>('/maintenance/overdue').then((r) => r.data);

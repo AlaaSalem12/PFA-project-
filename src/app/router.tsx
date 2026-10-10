@@ -44,6 +44,11 @@ const ChangePasswordPage = lazy(() =>
     default: module.ChangePasswordPage,
   })),
 );
+const NotificationsPage = lazy(() =>
+  import('../features/notifications/NotificationsPage').then((module) => ({
+    default: module.NotificationsPage,
+  })),
+);
 const AuditLogPage = lazy(() =>
   import('../features/audit/AuditLogPage').then((module) => ({ default: module.AuditLogPage })),
 );
@@ -80,6 +85,7 @@ export function AppRouter() {
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/audit-logs" element={<AuditLogPage />} />
             </Route>
+            <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />
             <Route path="/403" element={<ForbiddenPage />} />

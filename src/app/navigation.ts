@@ -88,6 +88,7 @@ const crumbLabels: Array<{ pattern: string; label: string }> = [
   { pattern: '/hr/organization', label: 'Organization' },
   { pattern: '/admin/users', label: 'Users' },
   { pattern: '/admin/audit-logs', label: 'Audit log' },
+  { pattern: '/notifications', label: 'Notifications' },
   { pattern: '/profile', label: 'Profile' },
   { pattern: '/change-password', label: 'Change password' },
   { pattern: '/403', label: 'Forbidden' },
