@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 type DateInput = string | number | Date | null | undefined;
 
 const EMPTY = '—';
@@ -8,19 +10,21 @@ function toDate(value: DateInput): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  year: 'numeric',
-  month: 'short',
-  day: '2-digit',
-});
+function locale(): string {
+  return i18n.language || 'fr';
+}
 
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
   year: 'numeric',
   month: 'short',
   day: '2-digit',
+};
+
+const DATE_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  ...DATE_OPTIONS,
   hour: '2-digit',
   minute: '2-digit',
-});
+};
 
 const moneyFormatter = new Intl.NumberFormat('fr-TN', {
   style: 'currency',
@@ -31,17 +35,39 @@ const moneyFormatter = new Intl.NumberFormat('fr-TN', {
 
 export function formatDate(value: DateInput, fallback = EMPTY): string {
   const date = toDate(value);
-  return date ? dateFormatter.format(date) : fallback;
+  return date ? new Intl.DateTimeFormat(locale(), DATE_OPTIONS).format(date) : fallback;
 }
 
 export function formatDateTime(value: DateInput, fallback = EMPTY): string {
   const date = toDate(value);
-  return date ? dateTimeFormatter.format(date) : fallback;
+  return date ? new Intl.DateTimeFormat(locale(), DATE_TIME_OPTIONS).format(date) : fallback;
 }
 
-/** "UNDER_MAINTENANCE" → "Under maintenance" */
-export function formatEnum(value: string | null | undefined, fallback = EMPTY): string {
+/** Enum groups of `enums.<ENUM>.<VALUE>` in the locale files. */
+const ENUM_GROUPS = [
+  'UserRole',
+  'MachineStatus',
+  'MachineType',
+  'WorkOrderType',
+  'WorkOrderPriority',
+  'WorkOrderStatus',
+  'EmployeeStatus',
+] as const;
+
+export type EnumName = (typeof ENUM_GROUPS)[number];
+
+/** Translated label of an enum value; falls back to "Under maintenance" style text. */
+export function formatEnum(
+  value: string | null | undefined,
+  enumName?: EnumName,
+  fallback = EMPTY,
+): string {
   if (!value) return fallback;
+  const groups = enumName ? [enumName] : ENUM_GROUPS;
+  for (const group of groups) {
+    const key = `enums.${group}.${value}`;
+    if (i18n.exists(key)) return i18n.t(key);
+  }
   const text = value.replaceAll('_', ' ').toLowerCase();
   return text.charAt(0).toUpperCase() + text.slice(1);
 }

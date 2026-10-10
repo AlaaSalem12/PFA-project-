@@ -19,6 +19,7 @@ import {
   PeopleAltOutlined,
   PrecisionManufacturingOutlined,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -73,6 +74,7 @@ function ChartCard({
 }
 
 export function AdminDashboard() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const user = useAuthStore((state) => state.user);
   const query = useQuery({
@@ -113,8 +115,11 @@ export function AdminDashboard() {
 
   if (query.isError || !query.data) {
     return (
-      <Alert severity="error" action={<Button onClick={() => void query.refetch()}>Retry</Button>}>
-        Dashboard data could not be loaded.
+      <Alert
+        severity="error"
+        action={<Button onClick={() => void query.refetch()}>{t('common.retry')}</Button>}
+      >
+        {t('dashboard.loadError')}
       </Alert>
     );
   }
@@ -138,25 +143,25 @@ export function AdminDashboard() {
 
   const cards: KpiCard[] = [
     {
-      label: 'Active users',
+      label: t('dashboard.kpi.activeUsers'),
       value: String(users.active),
       icon: <PeopleAltOutlined />,
       href: '/admin/users',
     },
     {
-      label: 'Employees',
+      label: t('dashboard.kpi.employees'),
       value: String(employees.total),
       icon: <BadgeOutlined />,
       href: '/hr/employees',
     },
     {
-      label: 'Machines operational',
+      label: t('dashboard.kpi.machinesOperational'),
       value: `${operationalPercent}%`,
       icon: <PrecisionManufacturingOutlined />,
       href: '/machines',
     },
     {
-      label: 'Open work orders',
+      label: t('dashboard.kpi.openWorkOrders'),
       value: String(workOrders.open + workOrders.inProgress),
       icon: <AssignmentOutlined />,
       href: '/work-orders',
@@ -227,7 +232,10 @@ export function AdminDashboard() {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 7 }}>
-          <ChartCard title="Machine status" subtitle="All machines by current status">
+          <ChartCard
+            title={t('dashboard.machineStatus')}
+            subtitle={t('dashboard.machineStatusSub')}
+          >
             <Box sx={{ height: 250, display: 'flex', alignItems: 'center' }}>
               <Box sx={{ width: '55%', height: 240, position: 'relative' }}>
                 <ResponsiveContainer>
@@ -259,7 +267,7 @@ export function AdminDashboard() {
                   <Box textAlign="center">
                     <Typography variant="h4">{machines.total}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      machines
+                      {t('dashboard.machines')}
                     </Typography>
                   </Box>
                 </Box>
@@ -291,18 +299,18 @@ export function AdminDashboard() {
             <CardContent sx={{ p: 3 }}>
               <Stack direction="row" justifyContent="space-between" mb={1}>
                 <Box>
-                  <Typography variant="h6">Needs attention</Typography>
+                  <Typography variant="h6">{t('dashboard.needsAttention')}</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Breakdowns and overdue maintenance
+                    {t('dashboard.needsAttentionSub')}
                   </Typography>
                 </Box>
                 <MuiLink component={Link} to="/machines" underline="none" fontWeight={700}>
-                  View all <ArrowOutward fontSize="small" />
+                  {t('common.viewAll')} <ArrowOutward fontSize="small" />
                 </MuiLink>
               </Stack>
               {attentionCount === 0 ? (
                 <Box sx={{ py: 5, textAlign: 'center' }}>
-                  <Typography color="text.secondary">Everything is running smoothly.</Typography>
+                  <Typography color="text.secondary">{t('dashboard.allGood')}</Typography>
                 </Box>
               ) : (
                 <>
@@ -330,7 +338,7 @@ export function AdminDashboard() {
                           {machine.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {machine.location || machine.workshop || 'Unassigned'}
+                          {machine.location || machine.workshop || t('dashboard.unassigned')}
                         </Typography>
                       </Box>
                       <StatusChip status={machine.maintenanceStatus} />
@@ -353,8 +361,7 @@ export function AdminDashboard() {
                     >
                       <BuildOutlined color="warning" />
                       <Typography fontWeight={650}>
-                        {machines.overdueMaintenance} machine
-                        {machines.overdueMaintenance === 1 ? '' : 's'} with overdue maintenance
+                        {t('dashboard.overdueMachines', { count: machines.overdueMaintenance })}
                       </Typography>
                     </Stack>
                   )}
@@ -365,7 +372,7 @@ export function AdminDashboard() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <ChartCard title="New users per month" subtitle="Last 6 months">
+          <ChartCard title={t('dashboard.newUsers')} subtitle={t('dashboard.last6Months')}>
             <Box sx={{ height: 240 }}>
               <ResponsiveContainer>
                 <BarChart data={users.newUsersPerMonth}>
@@ -375,7 +382,7 @@ export function AdminDashboard() {
                   <ChartTooltip cursor={{ fill: theme.palette.action.hover }} />
                   <Bar
                     dataKey="count"
-                    name="New users"
+                    name={t('dashboard.newUsersSeries')}
                     fill={theme.palette.primary.main}
                     radius={[4, 4, 0, 0]}
                   />
@@ -386,7 +393,10 @@ export function AdminDashboard() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <ChartCard title="Work orders by priority" subtitle="Open and in progress">
+          <ChartCard
+            title={t('dashboard.ordersByPriority')}
+            subtitle={t('dashboard.ordersByPrioritySub')}
+          >
             <Box sx={{ height: 240 }}>
               <ResponsiveContainer>
                 <BarChart data={priorityData}>
@@ -394,7 +404,7 @@ export function AdminDashboard() {
                   <XAxis dataKey="name" tick={axisStyle} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={axisStyle} axisLine={false} tickLine={false} />
                   <ChartTooltip cursor={{ fill: theme.palette.action.hover }} />
-                  <Bar dataKey="count" name="Work orders" radius={[4, 4, 0, 0]}>
+                  <Bar dataKey="count" name={t('dashboard.ordersSeries')} radius={[4, 4, 0, 0]}>
                     {priorityData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
@@ -406,7 +416,7 @@ export function AdminDashboard() {
         </Grid>
 
         <Grid size={{ xs: 12, md: 5 }}>
-          <ChartCard title="Employees by department">
+          <ChartCard title={t('dashboard.employeesByDepartment')}>
             <Box sx={{ height: Math.max(200, employees.byDepartment.length * 40) }}>
               <ResponsiveContainer>
                 <BarChart data={employees.byDepartment} layout="vertical">
@@ -429,7 +439,7 @@ export function AdminDashboard() {
                   <ChartTooltip cursor={{ fill: theme.palette.action.hover }} />
                   <Bar
                     dataKey="count"
-                    name="Employees"
+                    name={t('dashboard.employeesSeries')}
                     fill={theme.palette.secondary.main}
                     radius={[0, 4, 4, 0]}
                   />
@@ -442,13 +452,13 @@ export function AdminDashboard() {
         <Grid size={{ xs: 12, md: 7 }}>
           <Card sx={{ height: '100%', border: '1px solid', borderColor: 'divider' }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6">Recent status changes</Typography>
+              <Typography variant="h6">{t('dashboard.recentChanges')}</Typography>
               <Typography variant="body2" color="text.secondary" mb={1}>
-                Latest machine status updates
+                {t('dashboard.recentChangesSub')}
               </Typography>
               {machines.recentStatusChanges.length === 0 && (
                 <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-                  No status changes yet.
+                  {t('dashboard.noChanges')}
                 </Typography>
               )}
               {machines.recentStatusChanges.slice(0, 6).map((event) => (
@@ -478,8 +488,11 @@ export function AdminDashboard() {
                     <Typography variant="body2">
                       <b>{event.machine.name}</b>{' '}
                       {event.fromStatus
-                        ? `moved from ${formatEnum(event.fromStatus)} to ${formatEnum(event.toStatus)}`
-                        : `set to ${formatEnum(event.toStatus)}`}
+                        ? t('dashboard.movedFromTo', {
+                            from: formatEnum(event.fromStatus),
+                            to: formatEnum(event.toStatus),
+                          })
+                        : t('dashboard.setTo', { to: formatEnum(event.toStatus) })}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {event.changedBy.fullName} · {formatDateTime(event.changedAt)}

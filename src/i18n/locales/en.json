@@ -1,0 +1,233 @@
+{
+  "common": {
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "retry": "Retry",
+    "viewAll": "View all",
+    "seeAll": "See all",
+    "loading": "Loading...",
+    "language": "Language",
+    "logOut": "Log out",
+    "toggleNavigation": "Toggle navigation",
+    "toggleTheme": "Toggle theme",
+    "profile": "Profile",
+    "backToDashboard": "Back to dashboard",
+    "backToSignIn": "Back to sign in"
+  },
+  "nav": {
+    "groups": {
+      "overview": "Overview",
+      "maintenance": "Maintenance",
+      "hr": "HR",
+      "administration": "Administration"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "machines": "Machines",
+      "workOrders": "Work orders",
+      "maintenancePlans": "Maintenance plans",
+      "employees": "Employees",
+      "organization": "Organization",
+      "users": "Users",
+      "auditLog": "Audit log"
+    },
+    "crumbs": {
+      "newMachine": "New machine",
+      "details": "Details",
+      "edit": "Edit",
+      "notifications": "Notifications",
+      "profile": "Profile",
+      "changePassword": "Change password",
+      "forbidden": "Forbidden"
+    }
+  },
+  "layout": {
+    "tagline": "Operations hub"
+  },
+  "errors": {
+    "forbiddenTitle": "Access denied",
+    "forbiddenText": "You do not have permission to view this page.",
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The page you are looking for does not exist or has moved."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "loadError": "Notifications could not be loaded.",
+    "allCaughtUp": "You are all caught up."
+  },
+  "password": {
+    "requirements": "Password requirements",
+    "ruleLength": "At least 8 characters",
+    "ruleUpper": "One uppercase letter",
+    "ruleLower": "One lowercase letter",
+    "ruleDigit": "One digit",
+    "ruleSpecial": "One special character",
+    "newRequired": "New password is required",
+    "notMeetingRules": "Password does not meet the requirements",
+    "confirmRequired": "Confirm the new password",
+    "mismatch": "Passwords do not match"
+  },
+  "auth": {
+    "login": {
+      "brand": "▰ METALWORKS",
+      "platform": "INDUSTRIAL OPERATIONS PLATFORM",
+      "heroLine1": "Built for the",
+      "heroLine2": "work that matters.",
+      "heroText": "One connected workspace for people, production and performance across your industrial operations.",
+      "welcome": "WELCOME BACK",
+      "title": "Sign in to your workspace",
+      "subtitle": "Access your operational dashboard and team tools.",
+      "username": "Username",
+      "password": "Password",
+      "usernameRequired": "Username is required",
+      "passwordRequired": "Password is required",
+      "forgot": "Forgot password?",
+      "submit": "Sign in →",
+      "submitting": "Signing in…",
+      "retryIn": "Try again in {{seconds}}s",
+      "tooMany": "Too many sign-in attempts. Try again in {{minutes}} minute(s).",
+      "locked": "Your account is temporarily locked. Try again later.",
+      "failed": "Unable to sign in. Check your credentials.",
+      "secure": "▣ Secure access · METALWORKS enterprise network"
+    },
+    "forgot": {
+      "eyebrow": "ACCOUNT RECOVERY",
+      "title": "Forgot your password?",
+      "text": "Enter your account email and we will send you a reset link.",
+      "email": "Email",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email address",
+      "sent": "If the email exists, you will receive a link.",
+      "submit": "Send reset link",
+      "submitting": "Sending…"
+    },
+    "reset": {
+      "eyebrow": "ACCOUNT RECOVERY",
+      "title": "Reset your password",
+      "text": "Choose a new password for your account.",
+      "invalidLink": "This reset link is invalid or incomplete.",
+      "expired": "This reset link is invalid or has expired.",
+      "requestNew": "Request a new reset link",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "submit": "Reset password",
+      "submitting": "Saving…",
+      "done": "Password reset. Sign in with your new password."
+    },
+    "change": {
+      "eyebrow": "ACCOUNT SECURITY",
+      "titleForced": "Set your password",
+      "title": "Change password",
+      "textForced": "Your administrator provided a temporary password. Set a new password to continue.",
+      "text": "Use a unique password that meets the requirements below.",
+      "current": "Current password",
+      "currentRequired": "Current password is required",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "failed": "The password could not be changed.",
+      "submit": "Update password →",
+      "submitting": "Saving…",
+      "done": "Password changed. Sign in again with your new password."
+    }
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Good morning, {{name}}",
+      "afternoon": "Good afternoon, {{name}}",
+      "evening": "Good evening, {{name}}",
+      "fallbackName": "there"
+    },
+    "loadError": "Dashboard data could not be loaded.",
+    "machines": "machines",
+    "kpi": {
+      "activeUsers": "Active users",
+      "employees": "Employees",
+      "machinesOperational": "Machines operational",
+      "openWorkOrders": "Open work orders"
+    },
+    "machineStatus": "Machine status",
+    "machineStatusSub": "All machines by current status",
+    "needsAttention": "Needs attention",
+    "needsAttentionSub": "Breakdowns and overdue maintenance",
+    "allGood": "Everything is running smoothly.",
+    "unassigned": "Unassigned",
+    "overdueMachines_one": "{{count}} machine with overdue maintenance",
+    "overdueMachines_other": "{{count}} machines with overdue maintenance",
+    "newUsers": "New users per month",
+    "newUsersSeries": "New users",
+    "last6Months": "Last 6 months",
+    "ordersByPriority": "Work orders by priority",
+    "ordersByPrioritySub": "Open and in progress",
+    "ordersSeries": "Work orders",
+    "employeesByDepartment": "Employees by department",
+    "employeesSeries": "Employees",
+    "recentChanges": "Recent status changes",
+    "recentChangesSub": "Latest machine status updates",
+    "noChanges": "No status changes yet.",
+    "movedFromTo": "moved from {{from}} to {{to}}",
+    "setTo": "set to {{to}}",
+    "my": {
+      "breakdown": "Machines in breakdown",
+      "overdue": "Overdue maintenance",
+      "unread": "Unread notifications",
+      "openOrders": "My open work orders",
+      "openOrdersSub": "Assigned to you and not yet done",
+      "noOrders": "No open work orders. Nice work.",
+      "opened": "{{status}} · opened {{date}}",
+      "hrOverview": "HR overview",
+      "employees": "Employees",
+      "onLeave": "On leave",
+      "shortcuts": "Shortcuts"
+    }
+  },
+  "enums": {
+    "UserRole": {
+      "ADMIN": "Administrator",
+      "HR_MANAGER": "HR manager",
+      "PRODUCTION_MANAGER": "Production manager",
+      "MAINTENANCE_TECH": "Maintenance technician",
+      "EMPLOYEE": "Employee"
+    },
+    "MachineStatus": {
+      "OPERATIONAL": "Operational",
+      "SCHEDULED_MAINTENANCE": "Scheduled maintenance",
+      "UNDER_MAINTENANCE": "Under maintenance",
+      "BREAKDOWN": "Breakdown",
+      "OUT_OF_SERVICE": "Out of service"
+    },
+    "MachineType": {
+      "CNC": "CNC",
+      "LATHE": "Lathe",
+      "MILLING": "Milling",
+      "PRESS": "Press",
+      "WELDING_STATION": "Welding station",
+      "FURNACE": "Furnace",
+      "CRANE": "Crane",
+      "CUTTING": "Cutting",
+      "OTHER": "Other"
+    },
+    "WorkOrderType": {
+      "PREVENTIVE": "Preventive",
+      "CORRECTIVE": "Corrective"
+    },
+    "WorkOrderPriority": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "CRITICAL": "Critical"
+    },
+    "WorkOrderStatus": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In progress",
+      "DONE": "Done"
+    },
+    "EmployeeStatus": {
+      "ACTIVE": "Active",
+      "ON_LEAVE": "On leave",
+      "SUSPENDED": "Suspended",
+      "TERMINATED": "Terminated"
+    }
+  }
+}

@@ -2,9 +2,11 @@ import { Alert, Box, Button, Link, Paper, Stack, TextField, Typography } from '@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import i18n from '../../i18n';
 import { login } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
@@ -12,12 +14,13 @@ import { getErrorMessage } from '../../api/errors';
 import type { ApiErrorResponse } from '../../types/api';
 
 const schema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, { error: () => i18n.t('auth.login.usernameRequired') }),
+  password: z.string().min(1, { error: () => i18n.t('auth.login.passwordRequired') }),
 });
 type LoginValues = z.infer<typeof schema>;
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const successMessage = (location.state as { message?: string } | null)?.message;
@@ -58,10 +61,10 @@ export function LoginPage() {
     : undefined;
   const errorMessage =
     axios.isAxiosError<ApiErrorResponse>(mutation.error) && mutation.error.response?.status === 429
-      ? `Too many sign-in attempts. Try again in ${Math.ceil(rateLimitSeconds / 60)} minute(s).`
+      ? t('auth.login.tooMany', { minutes: Math.ceil(rateLimitSeconds / 60) })
       : serverCode === 'ACCOUNT_LOCKED'
-        ? getErrorMessage(mutation.error, 'Your account is temporarily locked. Try again later.')
-        : getErrorMessage(mutation.error, 'Unable to sign in. Check your credentials.');
+        ? getErrorMessage(mutation.error, t('auth.login.locked'))
+        : getErrorMessage(mutation.error, t('auth.login.failed'));
   const {
     register,
     handleSubmit,
@@ -83,7 +86,7 @@ export function LoginPage() {
       >
         <Box sx={{ maxWidth: 520 }}>
           <Typography fontWeight={900} letterSpacing={3}>
-            ▰ METALWORKS
+            {t('auth.login.brand')}
           </Typography>
           <Typography
             color="secondary.main"
@@ -92,21 +95,20 @@ export function LoginPage() {
             letterSpacing={3}
             mt={8}
           >
-            INDUSTRIAL OPERATIONS PLATFORM
+            {t('auth.login.platform')}
           </Typography>
           <Typography
             variant="h1"
             sx={{ mt: 2, fontSize: 'clamp(42px,5vw,74px)', lineHeight: 0.98 }}
           >
-            Built for the
+            {t('auth.login.heroLine1')}
             <br />
             <Box component="em" sx={{ color: 'secondary.main' }}>
-              work that matters.
+              {t('auth.login.heroLine2')}
             </Box>
           </Typography>
           <Typography sx={{ opacity: 0.8 }} mt={3} maxWidth={380}>
-            One connected workspace for people, production and performance across your industrial
-            operations.
+            {t('auth.login.heroText')}
           </Typography>
         </Box>
       </Box>
@@ -116,13 +118,13 @@ export function LoginPage() {
           sx={{ p: { xs: 0, sm: 3 }, width: '100%', maxWidth: 400, bgcolor: 'transparent' }}
         >
           <Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3}>
-            WELCOME BACK
+            {t('auth.login.welcome')}
           </Typography>
           <Typography variant="h4" mt={1} fontWeight={800}>
-            Sign in to your workspace
+            {t('auth.login.title')}
           </Typography>
           <Typography color="text.secondary" variant="body2" mt={1} mb={3}>
-            Access your operational dashboard and team tools.
+            {t('auth.login.subtitle')}
           </Typography>
           {successMessage && !mutation.isError && (
             <Alert severity="success" sx={{ mb: 2 }}>
@@ -140,13 +142,13 @@ export function LoginPage() {
             spacing={2}
           >
             <TextField
-              label="Username"
+              label={t('auth.login.username')}
               {...register('username')}
               error={!!errors.username}
               helperText={errors.username?.message}
             />
             <TextField
-              label="Password"
+              label={t('auth.login.password')}
               type="password"
               {...register('password')}
               error={!!errors.password}
@@ -159,7 +161,7 @@ export function LoginPage() {
               underline="hover"
               sx={{ alignSelf: 'flex-end' }}
             >
-              Forgot password?
+              {t('auth.login.forgot')}
             </Link>
             <Button
               type="submit"
@@ -169,10 +171,10 @@ export function LoginPage() {
             >
               {' '}
               {mutation.isPending
-                ? 'Signing in…'
+                ? t('auth.login.submitting')
                 : rateLimitSeconds > 0
-                  ? `Try again in ${rateLimitSeconds}s`
-                  : 'Sign in →'}{' '}
+                  ? t('auth.login.retryIn', { seconds: rateLimitSeconds })
+                  : t('auth.login.submit')}{' '}
             </Button>
           </Stack>
           <Typography
@@ -182,7 +184,7 @@ export function LoginPage() {
             textAlign="center"
             mt={5}
           >
-            ▣ Secure access · METALWORKS enterprise network
+            {t('auth.login.secure')}
           </Typography>
         </Paper>
       </Box>

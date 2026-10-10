@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   CircularProgress,
@@ -25,20 +26,21 @@ export function FormDialog({
   open,
   title,
   formId,
-  submitLabel = 'Save',
-  cancelLabel = 'Cancel',
+  submitLabel,
+  cancelLabel,
   loading = false,
   maxWidth = 'sm',
   onClose,
   children,
 }: FormDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onClose={loading ? undefined : onClose} maxWidth={maxWidth} fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent dividers>{children}</DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={loading}>
-          {cancelLabel}
+          {cancelLabel ?? t('common.cancel')}
         </Button>
         <Button
           type="submit"
@@ -47,7 +49,7 @@ export function FormDialog({
           disabled={loading}
           startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
-          {submitLabel}
+          {submitLabel ?? t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>

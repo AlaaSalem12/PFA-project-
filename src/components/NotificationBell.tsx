@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Notifications } from '@mui/icons-material';
 import { Badge, Box, Button, IconButton, Popover, Stack, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import { NotificationList } from '../features/notifications/NotificationList';
 import { useNotificationActions } from '../features/notifications/useNotificationActions';
 
 export function NotificationBell() {
+  const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const navigate = useNavigate();
   const close = () => setAnchor(null);
@@ -50,25 +52,25 @@ export function NotificationBell() {
           alignItems="center"
           sx={{ px: 2, py: 1.5 }}
         >
-          <Typography variant="h6">Notifications</Typography>
+          <Typography variant="h6">{t('notifications.title')}</Typography>
           <Button size="small" disabled={count === 0} onClick={() => readAll.mutate()}>
-            Mark all as read
+            {t('notifications.markAllRead')}
           </Button>
         </Stack>
         <Box sx={{ maxHeight: 420, overflowY: 'auto' }}>
           {latestQuery.isLoading && (
             <Typography color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
-              Loading...
+              {t('common.loading')}
             </Typography>
           )}
           {latestQuery.isError && (
             <Typography color="error" sx={{ p: 3, textAlign: 'center' }}>
-              Notifications could not be loaded.
+              {t('notifications.loadError')}
             </Typography>
           )}
           {latestQuery.data && items.length === 0 && (
             <Typography color="text.secondary" sx={{ p: 3, textAlign: 'center' }}>
-              You are all caught up.
+              {t('notifications.allCaughtUp')}
             </Typography>
           )}
           <NotificationList items={items} onSelect={open} />
@@ -81,7 +83,7 @@ export function NotificationBell() {
               navigate('/notifications');
             }}
           >
-            See all
+            {t('common.seeAll')}
           </Button>
         </Box>
       </Popover>

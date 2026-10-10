@@ -1,8 +1,10 @@
 import { Alert, Box, Button, Card, CardContent, Stack, TextField, Typography } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
+import i18n from '../../i18n';
 import { changePassword } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
 import { getErrorMessage } from '../../api/errors';
@@ -12,17 +14,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, 'Current password is required'),
+    currentPassword: z.string().min(1, { error: () => i18n.t('auth.change.currentRequired') }),
     newPassword: newPasswordSchema,
-    confirmPassword: z.string().min(1, 'Confirm the new password'),
+    confirmPassword: z.string().min(1, { error: () => i18n.t('password.confirmRequired') }),
   })
   .refine((values) => values.newPassword === values.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'Passwords do not match',
+    error: () => i18n.t('password.mismatch'),
   });
 type Values = z.infer<typeof schema>;
 
 export function ChangePasswordPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
@@ -33,7 +36,7 @@ export function ChangePasswordPage() {
       logout();
       navigate('/login', {
         replace: true,
-        state: { message: 'Password changed. Sign in again with your new password.' },
+        state: { message: t('auth.change.done') },
       });
     },
   });
@@ -47,19 +50,17 @@ export function ChangePasswordPage() {
   return (
     <Box maxWidth={540} mx="auto">
       <Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3}>
-        ACCOUNT SECURITY
+        {t('auth.change.eyebrow')}
       </Typography>
       <Typography variant="h4" mt={1}>
-        {location.state?.forced ? 'Set your password' : 'Change password'}
+        {location.state?.forced ? t('auth.change.titleForced') : t('auth.change.title')}
       </Typography>
       <Typography color="text.secondary" mt={1} mb={3}>
-        {location.state?.forced
-          ? 'Your administrator provided a temporary password. Set a new password to continue.'
-          : 'Use a unique password that meets the requirements below.'}
+        {location.state?.forced ? t('auth.change.textForced') : t('auth.change.text')}
       </Typography>
       {mutation.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {getErrorMessage(mutation.error, 'The password could not be changed.')}
+          {getErrorMessage(mutation.error, t('auth.change.failed'))}
         </Alert>
       )}
       <Card>
@@ -70,14 +71,14 @@ export function ChangePasswordPage() {
             onSubmit={handleSubmit((values) => mutation.mutate(values))}
           >
             <TextField
-              label="Current password"
+              label={t('auth.change.current')}
               type="password"
               {...register('currentPassword')}
               error={!!errors.currentPassword}
               helperText={errors.currentPassword?.message}
             />
             <TextField
-              label="New password"
+              label={t('auth.change.newPassword')}
               type="password"
               {...register('newPassword')}
               error={!!errors.newPassword}
@@ -85,14 +86,14 @@ export function ChangePasswordPage() {
             />
             <PasswordStrength password={newPassword} />
             <TextField
-              label="Confirm new password"
+              label={t('auth.change.confirmPassword')}
               type="password"
               {...register('confirmPassword')}
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword?.message}
             />
             <Button type="submit" variant="contained" disabled={mutation.isPending}>
-              {mutation.isPending ? 'Saving…' : 'Update password →'}
+              {mutation.isPending ? t('auth.change.submitting') : t('auth.change.submit')}
             </Button>
           </Stack>
         </CardContent>

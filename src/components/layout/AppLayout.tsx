@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, DarkMode, LightMode, Logout, Menu } from '@mui/icons-material';
 import {
   AppBar,
@@ -11,6 +12,8 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  ToggleButton,
+  ToggleButtonGroup,
   Toolbar,
   Tooltip,
   Typography,
@@ -19,12 +22,15 @@ import {
 } from '@mui/material';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { NotificationBell } from '../NotificationBell';
+import { formatEnum } from '../../utils/format';
 import { useAuthStore } from '../../store/authStore';
+import { LANGUAGES, type Language } from '../../i18n';
 import { useUiStore } from '../../store/uiStore';
 import { getBreadcrumbs, getVisibleNavGroups } from '../../app/navigation';
 const expanded = 256;
 const rail = 72;
 export function AppLayout() {
+  const { t, i18n } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width:1023px)');
   const { user, logout } = useAuthStore();
@@ -66,7 +72,7 @@ export function AppLayout() {
               MetalWorks
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Operations hub
+              {t('layout.tagline')}
             </Typography>
           </Box>
         )}
@@ -82,7 +88,7 @@ export function AppLayout() {
                   color="text.secondary"
                   sx={{ px: 2.5, fontSize: 10, letterSpacing: 1.4 }}
                 >
-                  {(sidebarOpen || isMobile) && group.label}
+                  {(sidebarOpen || isMobile) && t(group.label)}
                 </Typography>
                 <List sx={{ px: 1 }}>
                   {group.items.map((item) => {
@@ -92,7 +98,7 @@ export function AppLayout() {
                     return (
                       <Tooltip
                         key={item.path}
-                        title={!sidebarOpen && !isMobile ? item.label : ''}
+                        title={!sidebarOpen && !isMobile ? t(item.label) : ''}
                         placement="right"
                       >
                         <ListItemButton
@@ -130,7 +136,7 @@ export function AppLayout() {
                           </ListItemIcon>
                           {(sidebarOpen || isMobile) && (
                             <ListItemText
-                              primary={item.label}
+                              primary={t(item.label)}
                               primaryTypographyProps={{
                                 fontSize: 14,
                                 fontWeight: active ? 700 : 500,
@@ -165,18 +171,18 @@ export function AppLayout() {
                 {user?.fullName || user?.username}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {user?.role}
+                {formatEnum(user?.role, 'UserRole')}
               </Typography>
             </Box>
           </>
         )}
-        <Tooltip title="Log out">
+        <Tooltip title={t('common.logOut')}>
           <IconButton
             onClick={() => {
               logout();
               navigate('/login');
             }}
-            aria-label="Log out"
+            aria-label={t('common.logOut')}
           >
             <Logout fontSize="small" />
           </IconButton>
@@ -238,13 +244,13 @@ export function AppLayout() {
           <Toolbar sx={{ minHeight: 72, gap: 1.5, px: { xs: 2, md: 4 } }}>
             <IconButton
               onClick={() => (isMobile ? setMobileOpen(true) : toggleSidebar())}
-              aria-label="Toggle navigation"
+              aria-label={t('common.toggleNavigation')}
             >
               {isMobile ? <Menu /> : sidebarOpen ? <ChevronLeft /> : <ChevronRight />}
             </IconButton>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="body2" fontWeight={700} noWrap>
-                {crumbs.length > 0 ? crumbs[crumbs.length - 1].label : 'MetalWorks'}
+                {crumbs.length > 0 ? t(crumbs[crumbs.length - 1].label) : 'MetalWorks'}
               </Typography>
               <Typography variant="caption" color="text.secondary" noWrap>
                 {crumbs.map((crumb, index) => (
@@ -254,16 +260,34 @@ export function AppLayout() {
                         ›
                       </Box>
                     )}
-                    {crumb.label}
+                    {t(crumb.label)}
                   </Box>
                 ))}
               </Typography>
             </Box>
-            <IconButton onClick={() => setMode(dark ? 'light' : 'dark')} aria-label="Toggle theme">
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={i18n.language}
+              aria-label={t('common.language')}
+              onChange={(_, value: Language | null) => {
+                if (value) void i18n.changeLanguage(value);
+              }}
+            >
+              {LANGUAGES.map((language) => (
+                <ToggleButton key={language} value={language} sx={{ px: 1.25, fontWeight: 700 }}>
+                  {language.toUpperCase()}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+            <IconButton
+              onClick={() => setMode(dark ? 'light' : 'dark')}
+              aria-label={t('common.toggleTheme')}
+            >
               {dark ? <LightMode /> : <DarkMode />}
             </IconButton>
             <NotificationBell />
-            <IconButton onClick={() => navigate('/profile')} aria-label="Profile">
+            <IconButton onClick={() => navigate('/profile')} aria-label={t('common.profile')}>
               <Avatar
                 sx={{
                   width: 36,
@@ -288,7 +312,7 @@ export function AppLayout() {
             boxSizing: 'border-box',
           }}
         >
-          <Outlet />
+          <Outlet key={i18n.language} />
         </Box>
       </Box>
     </Box>

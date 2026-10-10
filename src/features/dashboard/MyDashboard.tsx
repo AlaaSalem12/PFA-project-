@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getMyDashboard } from '../../api/dashboard.api';
@@ -19,18 +20,19 @@ import type { UserRole, WorkOrderPriority } from '../../types/api';
 import { greeting, todayLabel } from './greeting';
 
 interface Shortcut {
+  /** i18n key. */
   label: string;
   to: string;
   roles?: UserRole[];
 }
 
 const SHORTCUTS: Shortcut[] = [
-  { label: 'Machines', to: '/machines' },
-  { label: 'Work orders', to: '/work-orders' },
-  { label: 'Notifications', to: '/notifications' },
-  { label: 'Maintenance plans', to: '/maintenance-plans', roles: ['PRODUCTION_MANAGER'] },
-  { label: 'Employees', to: '/hr/employees', roles: ['HR_MANAGER'] },
-  { label: 'Organization', to: '/hr/organization', roles: ['HR_MANAGER'] },
+  { label: 'nav.items.machines', to: '/machines' },
+  { label: 'nav.items.workOrders', to: '/work-orders' },
+  { label: 'nav.crumbs.notifications', to: '/notifications' },
+  { label: 'nav.items.maintenancePlans', to: '/maintenance-plans', roles: ['PRODUCTION_MANAGER'] },
+  { label: 'nav.items.employees', to: '/hr/employees', roles: ['HR_MANAGER'] },
+  { label: 'nav.items.organization', to: '/hr/organization', roles: ['HR_MANAGER'] },
 ];
 
 const PRIORITY_COLOR: Record<WorkOrderPriority, 'info' | 'secondary' | 'warning' | 'error'> = {
@@ -66,6 +68,7 @@ function Counter({ label, value, to }: { label: string; value: number; to: strin
 }
 
 export function MyDashboard() {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const query = useQuery({
     queryKey: ['my-dashboard'],
@@ -84,8 +87,11 @@ export function MyDashboard() {
 
   if (query.isError || !query.data) {
     return (
-      <Alert severity="error" action={<Button onClick={() => void query.refetch()}>Retry</Button>}>
-        Dashboard data could not be loaded.
+      <Alert
+        severity="error"
+        action={<Button onClick={() => void query.refetch()}>{t('common.retry')}</Button>}
+      >
+        {t('dashboard.loadError')}
       </Alert>
     );
   }
@@ -106,10 +112,14 @@ export function MyDashboard() {
           mb: 3,
         }}
       >
-        <Counter label="Machines in breakdown" value={data.machinesInBreakdown} to="/machines" />
-        <Counter label="Overdue maintenance" value={data.overdueMaintenance} to="/machines" />
         <Counter
-          label="Unread notifications"
+          label={t('dashboard.my.breakdown')}
+          value={data.machinesInBreakdown}
+          to="/machines"
+        />
+        <Counter label={t('dashboard.my.overdue')} value={data.overdueMaintenance} to="/machines" />
+        <Counter
+          label={t('dashboard.my.unread')}
           value={data.unreadNotifications}
           to="/notifications"
         />
@@ -124,13 +134,13 @@ export function MyDashboard() {
       >
         <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
           <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6">My open work orders</Typography>
+            <Typography variant="h6">{t('dashboard.my.openOrders')}</Typography>
             <Typography variant="body2" color="text.secondary" mb={1}>
-              Assigned to you and not yet done
+              {t('dashboard.my.openOrdersSub')}
             </Typography>
             {data.myOpenWorkOrders.length === 0 && (
               <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-                No open work orders. Nice work.
+                {t('dashboard.my.noOrders')}
               </Typography>
             )}
             {data.myOpenWorkOrders.map((order) => (
@@ -154,7 +164,10 @@ export function MyDashboard() {
                     {order.machine.code} · {order.description}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {formatEnum(order.status)} · opened {formatDate(order.openedAt)}
+                    {t('dashboard.my.opened', {
+                      status: formatEnum(order.status),
+                      date: formatDate(order.openedAt),
+                    })}
                   </Typography>
                 </Box>
                 <Chip
@@ -171,13 +184,13 @@ export function MyDashboard() {
           {data.hr && user?.role === 'HR_MANAGER' && (
             <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6">HR overview</Typography>
+                <Typography variant="h6">{t('dashboard.my.hrOverview')}</Typography>
                 <Stack direction="row" justifyContent="space-between" mt={2}>
-                  <Typography color="text.secondary">Employees</Typography>
+                  <Typography color="text.secondary">{t('dashboard.my.employees')}</Typography>
                   <Typography fontWeight={700}>{data.hr.employees}</Typography>
                 </Stack>
                 <Stack direction="row" justifyContent="space-between" mt={1}>
-                  <Typography color="text.secondary">On leave</Typography>
+                  <Typography color="text.secondary">{t('dashboard.my.onLeave')}</Typography>
                   <Typography fontWeight={700}>{data.hr.onLeave}</Typography>
                 </Stack>
               </CardContent>
@@ -185,7 +198,7 @@ export function MyDashboard() {
           )}
           <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
             <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6">Shortcuts</Typography>
+              <Typography variant="h6">{t('dashboard.my.shortcuts')}</Typography>
               <Stack spacing={1} mt={2}>
                 {shortcuts.map((item) => (
                   <Button
@@ -195,7 +208,7 @@ export function MyDashboard() {
                     variant="outlined"
                     sx={{ justifyContent: 'flex-start' }}
                   >
-                    {item.label}
+                    {t(item.label)}
                   </Button>
                 ))}
               </Stack>

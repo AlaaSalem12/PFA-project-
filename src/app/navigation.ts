@@ -13,6 +13,7 @@ import {
 import type { UserRole } from '../types/api';
 
 export interface NavItem {
+  /** i18n key, translated at render time. */
   label: string;
   path: string;
   icon: ElementType;
@@ -27,16 +28,16 @@ export interface NavGroup {
 
 export const navGroups: NavGroup[] = [
   {
-    label: 'Overview',
-    items: [{ label: 'Dashboard', path: '/dashboard', icon: SpaceDashboard }],
+    label: 'nav.groups.overview',
+    items: [{ label: 'nav.items.dashboard', path: '/dashboard', icon: SpaceDashboard }],
   },
   {
-    label: 'Maintenance',
+    label: 'nav.groups.maintenance',
     items: [
-      { label: 'Machines', path: '/machines', icon: Engineering },
-      { label: 'Work orders', path: '/work-orders', icon: Assignment },
+      { label: 'nav.items.machines', path: '/machines', icon: Engineering },
+      { label: 'nav.items.workOrders', path: '/work-orders', icon: Assignment },
       {
-        label: 'Maintenance plans',
+        label: 'nav.items.maintenancePlans',
         path: '/maintenance-plans',
         icon: EventRepeat,
         roles: ['ADMIN', 'PRODUCTION_MANAGER'],
@@ -44,11 +45,16 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'HR',
+    label: 'nav.groups.hr',
     items: [
-      { label: 'Employees', path: '/hr/employees', icon: Badge, roles: ['ADMIN', 'HR_MANAGER'] },
       {
-        label: 'Organization',
+        label: 'nav.items.employees',
+        path: '/hr/employees',
+        icon: Badge,
+        roles: ['ADMIN', 'HR_MANAGER'],
+      },
+      {
+        label: 'nav.items.organization',
         path: '/hr/organization',
         icon: AccountTree,
         roles: ['ADMIN', 'HR_MANAGER'],
@@ -56,10 +62,15 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Administration',
+    label: 'nav.groups.administration',
     items: [
-      { label: 'Users', path: '/admin/users', icon: People, roles: ['ADMIN'] },
-      { label: 'Audit log', path: '/admin/audit-logs', icon: ReceiptLong, roles: ['ADMIN'] },
+      { label: 'nav.items.users', path: '/admin/users', icon: People, roles: ['ADMIN'] },
+      {
+        label: 'nav.items.auditLog',
+        path: '/admin/audit-logs',
+        icon: ReceiptLong,
+        roles: ['ADMIN'],
+      },
     ],
   },
 ];
@@ -74,27 +85,28 @@ export function getVisibleNavGroups(role: UserRole | undefined): NavGroup[] {
     .filter((group) => group.items.length > 0);
 }
 
-/** Breadcrumb labels keyed by route pattern. */
+/** Breadcrumb i18n keys keyed by route pattern. */
 const crumbLabels: Array<{ pattern: string; label: string }> = [
-  { pattern: '/dashboard', label: 'Dashboard' },
-  { pattern: '/machines', label: 'Machines' },
-  { pattern: '/machines/new', label: 'New machine' },
-  { pattern: '/machines/:id', label: 'Details' },
-  { pattern: '/machines/:id/edit', label: 'Edit' },
-  { pattern: '/work-orders', label: 'Work orders' },
-  { pattern: '/work-orders/:id', label: 'Details' },
-  { pattern: '/maintenance-plans', label: 'Maintenance plans' },
-  { pattern: '/hr/employees', label: 'Employees' },
-  { pattern: '/hr/organization', label: 'Organization' },
-  { pattern: '/admin/users', label: 'Users' },
-  { pattern: '/admin/audit-logs', label: 'Audit log' },
-  { pattern: '/notifications', label: 'Notifications' },
-  { pattern: '/profile', label: 'Profile' },
-  { pattern: '/change-password', label: 'Change password' },
-  { pattern: '/403', label: 'Forbidden' },
+  { pattern: '/dashboard', label: 'nav.items.dashboard' },
+  { pattern: '/machines', label: 'nav.items.machines' },
+  { pattern: '/machines/new', label: 'nav.crumbs.newMachine' },
+  { pattern: '/machines/:id', label: 'nav.crumbs.details' },
+  { pattern: '/machines/:id/edit', label: 'nav.crumbs.edit' },
+  { pattern: '/work-orders', label: 'nav.items.workOrders' },
+  { pattern: '/work-orders/:id', label: 'nav.crumbs.details' },
+  { pattern: '/maintenance-plans', label: 'nav.items.maintenancePlans' },
+  { pattern: '/hr/employees', label: 'nav.items.employees' },
+  { pattern: '/hr/organization', label: 'nav.items.organization' },
+  { pattern: '/admin/users', label: 'nav.items.users' },
+  { pattern: '/admin/audit-logs', label: 'nav.items.auditLog' },
+  { pattern: '/notifications', label: 'nav.crumbs.notifications' },
+  { pattern: '/profile', label: 'nav.crumbs.profile' },
+  { pattern: '/change-password', label: 'nav.crumbs.changePassword' },
+  { pattern: '/403', label: 'nav.crumbs.forbidden' },
 ];
 
 export interface Crumb {
+  /** i18n key, translated at render time. */
   label: string;
   path: string;
 }

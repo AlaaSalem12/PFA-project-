@@ -1,0 +1,233 @@
+{
+  "common": {
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "retry": "Réessayer",
+    "viewAll": "Tout voir",
+    "seeAll": "Tout voir",
+    "loading": "Chargement...",
+    "language": "Langue",
+    "logOut": "Se déconnecter",
+    "toggleNavigation": "Afficher/masquer la navigation",
+    "toggleTheme": "Changer de thème",
+    "profile": "Profil",
+    "backToDashboard": "Retour au tableau de bord",
+    "backToSignIn": "Retour à la connexion"
+  },
+  "nav": {
+    "groups": {
+      "overview": "Vue d’ensemble",
+      "maintenance": "Maintenance",
+      "hr": "RH",
+      "administration": "Administration"
+    },
+    "items": {
+      "dashboard": "Tableau de bord",
+      "machines": "Machines",
+      "workOrders": "Ordres de travail",
+      "maintenancePlans": "Plans de maintenance",
+      "employees": "Employés",
+      "organization": "Organisation",
+      "users": "Utilisateurs",
+      "auditLog": "Journal d’audit"
+    },
+    "crumbs": {
+      "newMachine": "Nouvelle machine",
+      "details": "Détails",
+      "edit": "Modifier",
+      "notifications": "Notifications",
+      "profile": "Profil",
+      "changePassword": "Changer le mot de passe",
+      "forbidden": "Interdit"
+    }
+  },
+  "layout": {
+    "tagline": "Centre des opérations"
+  },
+  "errors": {
+    "forbiddenTitle": "Accès refusé",
+    "forbiddenText": "Vous n’avez pas la permission de voir cette page.",
+    "notFoundTitle": "Page introuvable",
+    "notFoundText": "La page que vous cherchez n’existe pas ou a été déplacée."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "loadError": "Impossible de charger les notifications.",
+    "allCaughtUp": "Vous êtes à jour."
+  },
+  "password": {
+    "requirements": "Exigences du mot de passe",
+    "ruleLength": "Au moins 8 caractères",
+    "ruleUpper": "Une lettre majuscule",
+    "ruleLower": "Une lettre minuscule",
+    "ruleDigit": "Un chiffre",
+    "ruleSpecial": "Un caractère spécial",
+    "newRequired": "Le nouveau mot de passe est requis",
+    "notMeetingRules": "Le mot de passe ne respecte pas les exigences",
+    "confirmRequired": "Confirmez le nouveau mot de passe",
+    "mismatch": "Les mots de passe ne correspondent pas"
+  },
+  "auth": {
+    "login": {
+      "brand": "▰ METALWORKS",
+      "platform": "PLATEFORME D’OPÉRATIONS INDUSTRIELLES",
+      "heroLine1": "Conçue pour",
+      "heroLine2": "le travail qui compte.",
+      "heroText": "Un espace connecté pour les personnes, la production et la performance de vos opérations industrielles.",
+      "welcome": "BON RETOUR",
+      "title": "Connectez-vous à votre espace",
+      "subtitle": "Accédez à votre tableau de bord opérationnel et aux outils de l’équipe.",
+      "username": "Nom d’utilisateur",
+      "password": "Mot de passe",
+      "usernameRequired": "Le nom d’utilisateur est requis",
+      "passwordRequired": "Le mot de passe est requis",
+      "forgot": "Mot de passe oublié ?",
+      "submit": "Se connecter →",
+      "submitting": "Connexion…",
+      "retryIn": "Réessayez dans {{seconds}} s",
+      "tooMany": "Trop de tentatives de connexion. Réessayez dans {{minutes}} minute(s).",
+      "locked": "Votre compte est temporairement verrouillé. Réessayez plus tard.",
+      "failed": "Connexion impossible. Vérifiez vos identifiants.",
+      "secure": "▣ Accès sécurisé · réseau d’entreprise METALWORKS"
+    },
+    "forgot": {
+      "eyebrow": "RÉCUPÉRATION DU COMPTE",
+      "title": "Mot de passe oublié ?",
+      "text": "Saisissez l’e-mail de votre compte et nous vous enverrons un lien de réinitialisation.",
+      "email": "E-mail",
+      "emailRequired": "L’e-mail est requis",
+      "emailInvalid": "Saisissez une adresse e-mail valide",
+      "sent": "Si l’e-mail existe, vous recevrez un lien.",
+      "submit": "Envoyer le lien",
+      "submitting": "Envoi…"
+    },
+    "reset": {
+      "eyebrow": "RÉCUPÉRATION DU COMPTE",
+      "title": "Réinitialiser votre mot de passe",
+      "text": "Choisissez un nouveau mot de passe pour votre compte.",
+      "invalidLink": "Ce lien de réinitialisation est invalide ou incomplet.",
+      "expired": "Ce lien de réinitialisation est invalide ou a expiré.",
+      "requestNew": "Demander un nouveau lien",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "submit": "Réinitialiser le mot de passe",
+      "submitting": "Enregistrement…",
+      "done": "Mot de passe réinitialisé. Connectez-vous avec votre nouveau mot de passe."
+    },
+    "change": {
+      "eyebrow": "SÉCURITÉ DU COMPTE",
+      "titleForced": "Définissez votre mot de passe",
+      "title": "Changer le mot de passe",
+      "textForced": "Votre administrateur a fourni un mot de passe temporaire. Définissez un nouveau mot de passe pour continuer.",
+      "text": "Utilisez un mot de passe unique qui respecte les exigences ci-dessous.",
+      "current": "Mot de passe actuel",
+      "currentRequired": "Le mot de passe actuel est requis",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le nouveau mot de passe",
+      "failed": "Le mot de passe n’a pas pu être modifié.",
+      "submit": "Mettre à jour le mot de passe →",
+      "submitting": "Enregistrement…",
+      "done": "Mot de passe modifié. Reconnectez-vous avec votre nouveau mot de passe."
+    }
+  },
+  "dashboard": {
+    "greeting": {
+      "morning": "Bonjour, {{name}}",
+      "afternoon": "Bon après-midi, {{name}}",
+      "evening": "Bonsoir, {{name}}",
+      "fallbackName": "à vous"
+    },
+    "loadError": "Impossible de charger les données du tableau de bord.",
+    "machines": "machines",
+    "kpi": {
+      "activeUsers": "Utilisateurs actifs",
+      "employees": "Employés",
+      "machinesOperational": "Machines opérationnelles",
+      "openWorkOrders": "Ordres de travail ouverts"
+    },
+    "machineStatus": "État des machines",
+    "machineStatusSub": "Toutes les machines par état actuel",
+    "needsAttention": "À surveiller",
+    "needsAttentionSub": "Pannes et maintenance en retard",
+    "allGood": "Tout fonctionne correctement.",
+    "unassigned": "Non affectée",
+    "overdueMachines_one": "{{count}} machine avec maintenance en retard",
+    "overdueMachines_other": "{{count}} machines avec maintenance en retard",
+    "newUsers": "Nouveaux utilisateurs par mois",
+    "newUsersSeries": "Nouveaux utilisateurs",
+    "last6Months": "6 derniers mois",
+    "ordersByPriority": "Ordres de travail par priorité",
+    "ordersByPrioritySub": "Ouverts et en cours",
+    "ordersSeries": "Ordres de travail",
+    "employeesByDepartment": "Employés par département",
+    "employeesSeries": "Employés",
+    "recentChanges": "Changements d’état récents",
+    "recentChangesSub": "Dernières mises à jour d’état des machines",
+    "noChanges": "Aucun changement d’état pour le moment.",
+    "movedFromTo": "est passée de {{from}} à {{to}}",
+    "setTo": "définie sur {{to}}",
+    "my": {
+      "breakdown": "Machines en panne",
+      "overdue": "Maintenance en retard",
+      "unread": "Notifications non lues",
+      "openOrders": "Mes ordres de travail ouverts",
+      "openOrdersSub": "Qui vous sont assignés et non terminés",
+      "noOrders": "Aucun ordre de travail ouvert. Bon travail.",
+      "opened": "{{status}} · ouvert le {{date}}",
+      "hrOverview": "Aperçu RH",
+      "employees": "Employés",
+      "onLeave": "En congé",
+      "shortcuts": "Raccourcis"
+    }
+  },
+  "enums": {
+    "UserRole": {
+      "ADMIN": "Administrateur",
+      "HR_MANAGER": "Responsable RH",
+      "PRODUCTION_MANAGER": "Responsable de production",
+      "MAINTENANCE_TECH": "Technicien de maintenance",
+      "EMPLOYEE": "Employé"
+    },
+    "MachineStatus": {
+      "OPERATIONAL": "Opérationnelle",
+      "SCHEDULED_MAINTENANCE": "Maintenance planifiée",
+      "UNDER_MAINTENANCE": "En maintenance",
+      "BREAKDOWN": "En panne",
+      "OUT_OF_SERVICE": "Hors service"
+    },
+    "MachineType": {
+      "CNC": "CNC",
+      "LATHE": "Tour",
+      "MILLING": "Fraiseuse",
+      "PRESS": "Presse",
+      "WELDING_STATION": "Poste de soudure",
+      "FURNACE": "Four",
+      "CRANE": "Grue",
+      "CUTTING": "Découpe",
+      "OTHER": "Autre"
+    },
+    "WorkOrderType": {
+      "PREVENTIVE": "Préventif",
+      "CORRECTIVE": "Correctif"
+    },
+    "WorkOrderPriority": {
+      "LOW": "Basse",
+      "MEDIUM": "Moyenne",
+      "HIGH": "Haute",
+      "CRITICAL": "Critique"
+    },
+    "WorkOrderStatus": {
+      "OPEN": "Ouvert",
+      "IN_PROGRESS": "En cours",
+      "DONE": "Terminé"
+    },
+    "EmployeeStatus": {
+      "ACTIVE": "Actif",
+      "ON_LEAVE": "En congé",
+      "SUSPENDED": "Suspendu",
+      "TERMINATED": "Terminé"
+    }
+  }
+}
