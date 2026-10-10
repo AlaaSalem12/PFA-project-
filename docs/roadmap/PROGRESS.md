@@ -11,3 +11,9 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - `git init -b main`; baseline commit made; `.gitignore` now excludes .env, .env.*, *.tsbuildinfo, *.log, uploads/, coverage/ (keeps .env.example).
 - Added `.env.example` (VITE_API_URL=http://localhost:8081/api/v1). `.env` is not tracked.
 - `npx tsc -b --noEmit` passes. Backend half of P0-01 (git init, env key renames, LLM vars) not done yet.
+
+## P0-01 — Git baseline + env cleanup, backend (2026-10-10)
+- `git init -b main`; baseline commit `chore: baseline`; `.gitignore` gained `uploads/` and `*.tsbuildinfo`. `.env` is not tracked.
+- Baseline already contains an earlier unplanned hardening pass (Prisma/body-parser error mapping, audit() wired into mutating routes, HR_MANAGER in user schemas, work orders + maintenance plans under src/modules/maintenance, organization router guard scoped to /departments and /positions, Docker/compose fixes). 18 tests pass.
+- Env cleanup: removed SMTP_PASS / MAIL_FROM / APP_URL from env.ts and docs; added optional LLM_BASE_URL, LLM_API_KEY, LLM_MODEL to env.ts and .env.example; PORT=8081.
+- `npx tsc --noEmit`, lint and jest pass. Left: CORS_ORIGIN in the untracked .env still lacks http://localhost:5173.
