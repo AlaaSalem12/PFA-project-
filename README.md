@@ -40,8 +40,7 @@ in [docs/architecture.md](docs/architecture.md).
 The seeded development account is `admin / Admin@123`; change it immediately in
 non-development environments.
 
-Configuration lives in `.env` (see `.env.example`; the legacy names `SMTP_PASS`,
-`MAIL_FROM` and `APP_URL` are still accepted). `CORS_ORIGIN` must list your frontend
+Configuration lives in `.env` (see `.env.example`). `CORS_ORIGIN` must list your frontend
 origin (Vite/React defaults to `http://localhost:5173`). Set `TRUST_PROXY` to the number
 of reverse proxies in front of the API so rate limiting sees real client IPs.
 In production, placeholder JWT secrets are rejected at start-up.

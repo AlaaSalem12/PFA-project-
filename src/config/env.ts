@@ -17,11 +17,10 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM: z.string().optional(),
-  FRONTEND_URL: z.string().url().optional(),
-  // Legacy names, still accepted so existing .env files keep working.
-  SMTP_PASS: z.string().optional(),
-  MAIL_FROM: z.string().optional(),
-  APP_URL: z.string().url().optional(),
+  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
+  LLM_BASE_URL: z.string().optional(),
+  LLM_API_KEY: z.string().optional(),
+  LLM_MODEL: z.string().optional(),
   SEED_ADMIN_USERNAME: z.string().default("admin"),
   SEED_ADMIN_PASSWORD: z.string().min(8).default("Admin@123"),
   SEED_ADMIN_EMAIL: z.string().email().default("admin@metal.local"),
@@ -32,11 +31,6 @@ const envSchema = z.object({
       context.addIssue({ code: "custom", path: [key], message: "Placeholder secret is not allowed in production" });
     }
   }
-}).transform((value) => ({
-  ...value,
-  SMTP_PASSWORD: value.SMTP_PASSWORD ?? value.SMTP_PASS,
-  SMTP_FROM: value.SMTP_FROM ?? value.MAIL_FROM,
-  FRONTEND_URL: value.FRONTEND_URL ?? value.APP_URL ?? "http://localhost:4200",
-}));
+});
 
 export const env = envSchema.parse(process.env);
