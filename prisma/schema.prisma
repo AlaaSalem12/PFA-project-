@@ -65,6 +65,7 @@ model User {
   auditLogs    AuditLog[] @relation("AuditActor")
   createdMachines Machine[] @relation("MachineCreatedBy")
   createdWorkOrders WorkOrder[] @relation("WorkOrderCreatedBy")
+  createdMaintenancePlans MaintenancePlan[] @relation("MaintenancePlanCreatedBy")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   @@map("app_users")
@@ -242,10 +243,13 @@ model MaintenancePlan {
   task           String
   frequencyDays  Int      @map("frequency_days")
   nextDueDate    DateTime @map("next_due_date") @db.Date
+  createdById    Int?     @map("created_by_id")
   machine        Machine  @relation(fields: [machineId], references: [id])
+  createdBy      User?    @relation("MaintenancePlanCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
-  createdBy      String?  @map("created_by")
+  @@index([machineId])
+  @@index([nextDueDate])
 }
 
 enum WorkOrderType {

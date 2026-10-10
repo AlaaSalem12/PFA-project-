@@ -202,6 +202,24 @@ async function main(): Promise<void> {
     });
   }
 
+  // Demo maintenance plans (one is overdue so the dashboards have something to flag).
+  const planData = [
+    ["CNC-001", "Spindle lubrication and coolant check", 30, 12],
+    ["LATHE-001", "Bed alignment and chuck inspection", 90, 45],
+    ["WELD-001", "Torch, liner and wire feeder service", 30, 5],
+    ["MILL-001", "Coolant system flush and filter change", 60, -2],
+  ] as const;
+  for (const [code, task, frequencyDays, dueInDays] of planData) {
+    const machine = machines.get(code);
+    if (!machine) continue;
+    const existing = await prisma.maintenancePlan.findFirst({ where: { machineId: machine.id, task } });
+    if (!existing) {
+      await prisma.maintenancePlan.create({
+        data: { machineId: machine.id, task, frequencyDays, nextDueDate: daysFromNow(dueInDays), createdById: admin.id },
+      });
+    }
+  }
+
   const statusEvents = [
     ["CNC-001", MaintenanceStatus.SCHEDULED_MAINTENANCE, MaintenanceStatus.OPERATIONAL, "Routine maintenance completed", 3],
     ["MILL-001", MaintenanceStatus.OPERATIONAL, MaintenanceStatus.SCHEDULED_MAINTENANCE, "Preventive maintenance scheduled", 2],
