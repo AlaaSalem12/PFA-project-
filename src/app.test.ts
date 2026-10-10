@@ -11,6 +11,7 @@ const admin = {
 };
 const employeeUser = { ...admin, id: 2, username: "employee", role: "EMPLOYEE" };
 const techUser = { ...admin, id: 4, username: "tech", role: "MAINTENANCE_TECH" };
+const hrUser = { ...admin, id: 6, username: "hr", role: "HR_MANAGER" };
 const freshUser = { ...admin, id: 5, username: "fresh", role: "HR_MANAGER", mustChangePassword: true };
 const machineRow: Record<string, unknown> = {
   id: 10, code: "PRESS-001", name: "Press", type: "PRESS", maintenanceStatus: "OUT_OF_SERVICE",
@@ -21,13 +22,14 @@ const mockPrisma = {
     findUnique: jest.fn(),
     findFirst: jest.fn(),
     update: jest.fn(async ({ where }: { where: { id: number } }) =>
-      [admin, employeeUser, techUser, freshUser].find((user) => user.id === where.id) ?? employeeUser),
+      [admin, employeeUser, techUser, freshUser, hrUser].find((user) => user.id === where.id) ?? employeeUser),
     findMany: jest.fn(async () => [admin]),
     count: jest.fn(async () => 1),
+    updateMany: jest.fn(async () => ({ count: 0 })),
     create: jest.fn(async ({ data }: { data: object }) => ({ ...admin, ...data, id: 3 })),
   },
   employee: {
-    findMany: jest.fn(async () => []),
+    findMany: jest.fn(async (_args?: unknown) => []),
     count: jest.fn(async () => 0),
     findFirst: jest.fn(async () => null),
     create: jest.fn(),
@@ -40,6 +42,11 @@ const mockPrisma = {
     create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: 11, ...data })),
     update: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({ ...machineRow, ...data })),
   },
+  department: {
+    findUnique: jest.fn(async (): Promise<Record<string, unknown> | null> => null),
+    findMany: jest.fn(async () => []),
+    delete: jest.fn(async () => ({})),
+  },
   machineStatusLog: { create: jest.fn(async () => ({})) },
   notification: { createMany: jest.fn(async () => ({ count: 0 })) },
   auditLog: { create: jest.fn(async () => ({})) },
@@ -51,6 +58,7 @@ const mockPrisma = {
     create: jest.fn(async ({ data }: { data: object }) => ({ id: 1, status: "OPEN", ...data })),
     findFirst: jest.fn(async (): Promise<object | null> => null),
     update: jest.fn(),
+    count: jest.fn(async () => 0),
   },
   $transaction: jest.fn(async (operations: unknown): Promise<unknown> =>
     typeof operations === "function" ? operations(mockPrisma) : Promise.all(operations as Promise<unknown>[])),
@@ -77,6 +85,7 @@ describe("API integration contracts", () => {
       if (where.username === "employee" || where.id === 2) return employeeUser;
       if (where.username === "tech" || where.id === 4) return techUser;
       if (where.username === "fresh" || where.id === 5) return freshUser;
+      if (where.username === "hr" || where.id === 6) return hrUser;
       return null;
     });
     mockPrisma.user.findFirst.mockResolvedValue(null);
@@ -421,6 +430,68 @@ describe("API integration contracts", () => {
       const token = await tokenFor("admin");
       expect((await request(app).get("/api/v1/admin/users").set("Authorization", `Bearer ${token}`)).status).toBe(404);
       expect((await request(app).post("/api/v1/users/2/resend-credentials").set("Authorization", `Bearer ${token}`)).status).toBe(404);
+    });
+  });
+
+  describe("HR (P1-06)", () => {
+    const employeeRow = {
+      id: 7, matricule: "EMP-7", firstName: "Ada", lastName: "Lovelace", birthDate: null,
+      hireDate: new Date("2020-01-01"), status: "ACTIVE", department: null, position: null, user: null,
+      authorizedMachines: [],
+    };
+
+    it("filters the employee list by status, department and position", async () => {
+      const token = await tokenFor("admin");
+      const response = await request(app).get("/api/v1/employees?status=ON_LEAVE&departmentId=2&positionId=3&search=ada")
+        .set("Authorization", `Bearer ${token}`);
+      expect(response.status).toBe(200);
+      const where = mockPrisma.employee.findMany.mock.calls[0][0] as unknown as { where: Record<string, unknown> };
+      expect(where.where).toMatchObject({ deletedAt: null, status: "ON_LEAVE", departmentId: 2, positionId: 3 });
+      expect(where.where.OR).toHaveLength(4);
+      expect((await request(app).get("/api/v1/employees?status=BOGUS").set("Authorization", `Bearer ${token}`)).status).toBe(400);
+    });
+
+    it("lets a technician use /employees/options but not the HR list", async () => {
+      const token = await tokenFor("tech");
+      expect((await request(app).get("/api/v1/employees/options?search=a").set("Authorization", `Bearer ${token}`)).status).toBe(200);
+      expect((await request(app).get("/api/v1/employees").set("Authorization", `Bearer ${token}`)).status).toBe(403);
+      const employeeToken = await tokenFor("employee");
+      expect((await request(app).get("/api/v1/employees/options").set("Authorization", `Bearer ${employeeToken}`)).status).toBe(403);
+    });
+
+    it("refuses to delete a department that still has employees", async () => {
+      mockPrisma.department.findUnique.mockResolvedValueOnce({ id: 1, name: "Welding", _count: { employees: 2 } });
+      const response = await request(app).delete("/api/v1/departments/1").set("Authorization", `Bearer ${await tokenFor("admin")}`);
+      expect(response.status).toBe(409);
+      expect(response.body.code).toBe("CONFLICT");
+      expect(mockPrisma.department.delete).not.toHaveBeenCalled();
+    });
+
+    it("deletes an empty department and returns 404 for an unknown one", async () => {
+      const token = await tokenFor("admin");
+      mockPrisma.department.findUnique.mockResolvedValueOnce({ id: 1, name: "Empty", _count: { employees: 0 } });
+      expect((await request(app).delete("/api/v1/departments/1").set("Authorization", `Bearer ${token}`)).status).toBe(204);
+      expect((await request(app).delete("/api/v1/departments/99").set("Authorization", `Bearer ${token}`)).status).toBe(404);
+    });
+
+    it("refuses to delete an employee with open work orders", async () => {
+      mockPrisma.employee.findFirst.mockResolvedValue(employeeRow as never);
+      mockPrisma.workOrder.count.mockResolvedValueOnce(2);
+      const response = await request(app).delete("/api/v1/employees/7").set("Authorization", `Bearer ${await tokenFor("admin")}`);
+      expect(response.status).toBe(409);
+      expect(mockPrisma.employee.update).not.toHaveBeenCalled();
+    });
+
+    it("rejects a birth date after the hire date and a malformed phone number", async () => {
+      const token = await tokenFor("hr");
+      const base = { matricule: "EMP-9", firstName: "A", lastName: "B", hireDate: "2020-01-01" };
+      const dates = await request(app).post("/api/v1/employees").set("Authorization", `Bearer ${token}`)
+        .send({ ...base, birthDate: "2021-01-01" });
+      expect(dates.status).toBe(400);
+      expect(dates.body.fieldErrors[0].field).toBe("birthDate");
+      const phone = await request(app).post("/api/v1/employees").set("Authorization", `Bearer ${token}`)
+        .send({ ...base, phone: "abc" });
+      expect(phone.status).toBe(400);
     });
   });
 });

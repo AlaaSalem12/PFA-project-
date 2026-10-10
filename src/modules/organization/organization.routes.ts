@@ -1,46 +1,39 @@
 import { Router } from "express";
 import { Role } from "@prisma/client";
 import { z } from "zod";
-import { prisma } from "../../config/prisma";
 import { asyncHandler } from "../../common/async-handler";
 import { auditFrom } from "../../common/audit";
+import { optionalText } from "../../common/zod";
 import { AuthRequest, authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
+import { CatalogKind, CatalogService } from "./organization.service";
 
-const body = z.object({ name: z.string().trim().min(1).max(120), description: z.string().max(500).optional() });
-const id = z.object({ id: z.coerce.number().int().positive() });
-const router = Router();
-// Scoped to these paths: this router is mounted at /api/v1, so an unscoped guard would also block machines, notifications, etc.
-router.use(["/departments", "/positions"], authenticate, requirePasswordChange, authorize(Role.ADMIN, Role.HR_MANAGER));
+const body = z.object({ name: z.string().trim().min(1).max(120), description: optionalText(500) });
+const idParams = z.object({ id: z.coerce.number().int().positive() });
 
-// Departments and positions share the same shape, so one registration covers both.
-const registerCatalog = (path: "departments" | "positions", entity: "Department" | "Position") => {
+const catalogRouter = (kind: CatalogKind, entity: "Department" | "Position") => {
+  const service = new CatalogService(kind);
   const prefix = entity.toUpperCase();
-  const model = path === "departments" ? prisma.department : prisma.position;
-  const delegate = model as unknown as {
-    findMany: typeof prisma.department.findMany;
-    create: typeof prisma.department.create;
-    update: typeof prisma.department.update;
-    delete: typeof prisma.department.delete;
-  };
-  router.get(`/${path}`, asyncHandler(async (_req, res) => res.json(await delegate.findMany({ orderBy: { name: "asc" } }))));
-  router.post(`/${path}`, validate({ body }), asyncHandler(async (req: AuthRequest, res) => {
-    const created = await delegate.create({ data: { ...req.body, createdBy: req.user!.username } });
+  const router = Router();
+  router.use(authenticate, requirePasswordChange, authorize(Role.ADMIN, Role.HR_MANAGER));
+  router.get("/", asyncHandler(async (_req, res) => res.json(await service.list())));
+  router.post("/", validate({ body }), asyncHandler(async (req: AuthRequest, res) => {
+    const created = await service.create(req.body, req.user!.username);
     await auditFrom(req, { action: `${prefix}_CREATED`, entity, entityId: created.id, metadata: { name: created.name } });
     res.status(201).json(created);
   }));
-  router.put(`/${path}/:id`, validate({ params: id, body }), asyncHandler(async (req: AuthRequest, res) => {
-    const updated = await delegate.update({ where: { id: Number(req.params.id) }, data: req.body });
+  router.put("/:id", validate({ params: idParams, body }), asyncHandler(async (req: AuthRequest, res) => {
+    const updated = await service.update(Number(req.params.id), req.body);
     await auditFrom(req, { action: `${prefix}_UPDATED`, entity, entityId: updated.id, metadata: { name: updated.name } });
     res.json(updated);
   }));
-  router.delete(`/${path}/:id`, validate({ params: id }), asyncHandler(async (req: AuthRequest, res) => {
-    await delegate.delete({ where: { id: Number(req.params.id) } });
-    await auditFrom(req, { action: `${prefix}_DELETED`, entity, entityId: req.params.id as string });
+  router.delete("/:id", validate({ params: idParams }), asyncHandler(async (req: AuthRequest, res) => {
+    await service.remove(Number(req.params.id));
+    await auditFrom(req, { action: `${prefix}_DELETED`, entity, entityId: Number(req.params.id) });
     res.status(204).send();
   }));
+  return router;
 };
-registerCatalog("departments", "Department");
-registerCatalog("positions", "Position");
 
-export const organizationRouter = router;
+export const departmentRouter = catalogRouter("department", "Department");
+export const positionRouter = catalogRouter("position", "Position");

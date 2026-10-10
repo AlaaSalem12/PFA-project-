@@ -1,71 +1,48 @@
 import { Router } from "express";
-import { Prisma, Role } from "@prisma/client";
-import { z } from "zod";
-import { prisma } from "../../config/prisma";
-import { pageResponse } from "../../common/pagination";
+import { Role } from "@prisma/client";
 import { asyncHandler } from "../../common/async-handler";
-import { ApiError } from "../../common/api-error";
 import { auditFrom } from "../../common/audit";
 import { AuthRequest, authenticate, authorize, requirePasswordChange } from "../../middlewares/auth";
 import { validate } from "../../middlewares/validate";
+import {
+  employeeBodySchema, employeeIdSchema, employeeOptionsQuerySchema, employeeQuerySchema, employeeUpdateSchema,
+  type EmployeeQuery,
+} from "./employee.schemas";
+import { EmployeeService } from "./employee.service";
 
-const employeeBody = z.object({
-  matricule: z.string().min(1).max(40), firstName: z.string().min(1), lastName: z.string().min(1),
-  socialSecurityNumber: z.string().optional(), birthDate: z.coerce.date().optional(), phone: z.string().optional(),
-  email: z.string().email().optional(), address: z.string().optional(), hireDate: z.coerce.date(),
-  photoUrl: z.string().url().optional(), status: z.enum(["ACTIVE", "ON_LEAVE", "SUSPENDED", "TERMINATED"]).optional(),
-  departmentId: z.number().int().positive().optional(), positionId: z.number().int().positive().optional(),
-});
-const params = z.object({ id: z.coerce.number().int().positive() });
-const query = z.object({
-  page: z.coerce.number().int().min(0).default(0),
-  size: z.coerce.number().int().min(1).max(100).default(10),
-  sort: z.string().regex(/^[A-Za-z]+,(asc|desc)$/).default("id,desc"),
-  search: z.string().default(""),
-});
+const service = new EmployeeService();
 const router = Router();
-router.use(authenticate, requirePasswordChange, authorize(Role.ADMIN, Role.HR_MANAGER));
-router.get("/", validate({ query }), asyncHandler(async (req, res) => {
-  const { page, size, search, sort } = req.query as unknown as z.infer<typeof query>;
-  const [sortField, direction] = sort.split(",");
-  const orderBy: Prisma.EmployeeOrderByWithRelationInput =
-    sortField === "firstName" || sortField === "lastName" || sortField === "matricule" || sortField === "status"
-      ? { [sortField]: direction as Prisma.SortOrder }
-      : { id: direction as Prisma.SortOrder };
-  const where = { deletedAt: null, ...(search ? { OR: [{ firstName: { contains: search, mode: "insensitive" as const } }, { lastName: { contains: search, mode: "insensitive" as const } }, { matricule: { contains: search, mode: "insensitive" as const } }] } : {}) };
-  const [content, totalElements] = await prisma.$transaction([
-    prisma.employee.findMany({ where, include: { department: true, position: true }, skip: page * size, take: size, orderBy }),
-    prisma.employee.count({ where }),
-  ]);
-  res.json(pageResponse(content, totalElements, page, size));
+router.use(authenticate, requirePasswordChange);
+
+// Registered before the HR-only guard and before /:id; used by work-order and user pickers.
+router.get("/options", authorize(Role.ADMIN, Role.HR_MANAGER, Role.PRODUCTION_MANAGER, Role.MAINTENANCE_TECH),
+  validate({ query: employeeOptionsQuerySchema }), asyncHandler(async (req, res) => {
+    res.json(await service.options((req.query as unknown as { search: string }).search));
+  }));
+
+router.use(authorize(Role.ADMIN, Role.HR_MANAGER));
+router.get("/", validate({ query: employeeQuerySchema }), asyncHandler(async (req, res) => {
+  res.json(await service.list(req.query as unknown as EmployeeQuery));
 }));
-const findActive = async (id: number) => {
-  const employee = await prisma.employee.findFirst({ where: { id, deletedAt: null }, include: { department: true, position: true } });
-  if (!employee) throw new ApiError(404, "Employee not found");
-  return employee;
-};
-router.post("/", validate({ body: employeeBody }), asyncHandler(async (req: AuthRequest, res) => {
-  const employee = await prisma.employee.create({ data: { ...req.body, createdBy: req.user!.username } });
+router.post("/", validate({ body: employeeBodySchema }), asyncHandler(async (req: AuthRequest, res) => {
+  const employee = await service.create(req.body, req.user!.username);
   await auditFrom(req, { action: "EMPLOYEE_CREATED", entity: "Employee", entityId: employee.id, metadata: { matricule: employee.matricule } });
   res.status(201).json(employee);
 }));
-router.get("/:id", validate({ params }), asyncHandler(async (req, res) => {
-  res.json(await findActive(Number(req.params.id)));
+router.get("/:id", validate({ params: employeeIdSchema }), asyncHandler(async (req, res) => {
+  res.json(await service.get(Number(req.params.id)));
 }));
-router.put("/:id", validate({ params, body: employeeBody.partial() }), asyncHandler(async (req: AuthRequest, res) => {
-  const id = Number(req.params.id);
-  await findActive(id);
-  const employee = await prisma.employee.update({ where: { id }, data: req.body });
-  await auditFrom(req, { action: "EMPLOYEE_UPDATED", entity: "Employee", entityId: id, metadata: { fields: Object.keys(req.body) } });
+router.put("/:id", validate({ params: employeeIdSchema, body: employeeUpdateSchema }), asyncHandler(async (req: AuthRequest, res) => {
+  const employee = await service.update(Number(req.params.id), req.body);
+  // Field names only: values such as the social security number never go to the audit log.
+  const fields = Object.keys(req.body).filter((key) => req.body[key] !== undefined);
+  await auditFrom(req, { action: "EMPLOYEE_UPDATED", entity: "Employee", entityId: employee.id, metadata: { fields } });
   res.json(employee);
 }));
-router.delete("/:id", validate({ params }), asyncHandler(async (req: AuthRequest, res) => {
-  const id = Number(req.params.id);
-  await findActive(id);
-  const linkedUser = await prisma.user.findFirst({ where: { employeeId: id, deletedAt: null } });
-  if (linkedUser) throw new ApiError(409, "Employee is linked to an active user account");
-  await prisma.employee.update({ where: { id }, data: { deletedAt: new Date(), status: "TERMINATED" } });
-  await auditFrom(req, { action: "EMPLOYEE_DELETED", entity: "Employee", entityId: id });
+router.delete("/:id", validate({ params: employeeIdSchema }), asyncHandler(async (req: AuthRequest, res) => {
+  await service.remove(Number(req.params.id));
+  await auditFrom(req, { action: "EMPLOYEE_DELETED", entity: "Employee", entityId: Number(req.params.id) });
   res.status(204).send();
 }));
+
 export const employeeRouter = router;
