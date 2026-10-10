@@ -261,6 +261,14 @@ export interface WorkOrderQuery extends PagedQuery {
   mine?: boolean;
 }
 
+export interface MaintenancePlan {
+  id: number;
+  machine: { id: number; code: string; name: string };
+  task: string;
+  frequencyDays: number;
+  nextDueDate: string;
+}
+
 /* ---------- Notifications (contract §7) ---------- */
 
 export type NotificationType =

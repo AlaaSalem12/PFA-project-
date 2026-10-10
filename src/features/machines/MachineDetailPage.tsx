@@ -44,6 +44,9 @@ import type { MachineDetail, MachineStatus } from '../../types/api';
 import { formatDate, formatDateTime, formatEnum, formatMoney } from '../../utils/format';
 import { COMMENT_REQUIRED, STATUS_CHANGE_ROLES, allowedTransitions } from './constants';
 import { MachineOperatorsTab } from './MachineOperatorsTab';
+import { CreateWorkOrderDialog } from '../work-orders/CreateWorkOrderDialog';
+import { PriorityChip, WorkOrderStatusChip } from '../work-orders/WorkOrderChips';
+import { WORK_ORDER_WRITE_ROLES } from '../work-orders/constants';
 
 function isOverdue(machine: MachineDetail): boolean {
   if (!machine.nextMaintenanceDueAt) return false;
@@ -193,27 +196,38 @@ function NotesTab({ machineId }: { machineId: number }) {
   );
 }
 
-function WorkOrdersTab({ machineId }: { machineId: number }) {
-  // The "Create work order" button is intentionally absent: the work-orders UI (P1-17) does not exist yet.
+function WorkOrdersTab({ machine }: { machine: MachineDetail }) {
+  const role = useAuthStore((state) => state.user?.role);
+  const canCreate = Boolean(role && WORK_ORDER_WRITE_ROLES.includes(role));
+  const [createOpen, setCreateOpen] = useState(false);
   const workOrders = useQuery({
-    queryKey: ['machine-work-orders', machineId],
-    queryFn: () => getMachineWorkOrders(machineId),
+    queryKey: ['machine-work-orders', machine.id],
+    queryFn: () => getMachineWorkOrders(machine.id),
   });
-  if (workOrders.isLoading) return <CircularProgress size={24} />;
-  if (workOrders.isError)
-    return <Alert severity="error">{getErrorMessage(workOrders.error)}</Alert>;
-  if (!workOrders.data?.length) {
-    return <Typography color="text.secondary">No work orders for this machine.</Typography>;
-  }
+
   return (
     <Stack spacing={1.5}>
-      {workOrders.data.map((order) => (
+      {canCreate && (
+        <Box>
+          <Button variant="contained" onClick={() => setCreateOpen(true)}>
+            Create work order
+          </Button>
+        </Box>
+      )}
+      {workOrders.isLoading && <CircularProgress size={24} />}
+      {workOrders.isError && <Alert severity="error">{getErrorMessage(workOrders.error)}</Alert>}
+      {workOrders.data?.length === 0 && (
+        <Typography color="text.secondary">No work orders for this machine.</Typography>
+      )}
+      {workOrders.data?.map((order) => (
         <Box key={order.id} borderBottom={1} borderColor="divider" pb={1}>
           <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-            <Typography fontWeight={600}>#{order.id}</Typography>
+            <Typography fontWeight={600} component={Link} to={`/work-orders/${order.id}`}>
+              #{order.id}
+            </Typography>
             <Chip size="small" variant="outlined" label={formatEnum(order.type)} />
-            <Chip size="small" variant="outlined" label={formatEnum(order.priority)} />
-            <Chip size="small" color="primary" label={formatEnum(order.status)} />
+            <PriorityChip priority={order.priority} />
+            <WorkOrderStatusChip status={order.status} />
           </Stack>
           <Typography variant="body2" sx={{ mt: 0.5 }}>
             {order.description}
@@ -226,6 +240,11 @@ function WorkOrdersTab({ machineId }: { machineId: number }) {
           </Typography>
         </Box>
       ))}
+      <CreateWorkOrderDialog
+        open={createOpen}
+        machine={{ id: machine.id, code: machine.code, name: machine.name }}
+        onClose={() => setCreateOpen(false)}
+      />
     </Stack>
   );
 }
@@ -408,7 +427,7 @@ export function MachineDetailPage() {
           {tab === 1 && <HistoryTab machineId={machineId} />}
           {tab === 2 && <NotesTab machineId={machineId} />}
           {tab === 3 && <MachineOperatorsTab machine={current} />}
-          {tab === 4 && <WorkOrdersTab machineId={machineId} />}
+          {tab === 4 && <WorkOrdersTab machine={current} />}
         </CardContent>
       </Card>
 

@@ -5,6 +5,7 @@ import {
   Badge,
   Engineering,
   Assignment,
+  EventRepeat,
   People,
   ReceiptLong,
   SpaceDashboard,
@@ -34,6 +35,12 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Machines', path: '/machines', icon: Engineering },
       { label: 'Work orders', path: '/work-orders', icon: Assignment },
+      {
+        label: 'Maintenance plans',
+        path: '/maintenance-plans',
+        icon: EventRepeat,
+        roles: ['ADMIN', 'PRODUCTION_MANAGER'],
+      },
     ],
   },
   {
@@ -75,6 +82,8 @@ const crumbLabels: Array<{ pattern: string; label: string }> = [
   { pattern: '/machines/:id', label: 'Details' },
   { pattern: '/machines/:id/edit', label: 'Edit' },
   { pattern: '/work-orders', label: 'Work orders' },
+  { pattern: '/work-orders/:id', label: 'Details' },
+  { pattern: '/maintenance-plans', label: 'Maintenance plans' },
   { pattern: '/hr/employees', label: 'Employees' },
   { pattern: '/hr/organization', label: 'Organization' },
   { pattern: '/admin/users', label: 'Users' },

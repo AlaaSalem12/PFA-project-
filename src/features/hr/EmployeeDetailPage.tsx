@@ -17,12 +17,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { getEmployee, removeEmployee } from '../../api/employees.api';
+import { listWorkOrders } from '../../api/workOrders.api';
 import { getErrorMessage } from '../../api/errors';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { PageHeader } from '../../components/PageHeader';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
 import { formatDate, formatEnum } from '../../utils/format';
+import { PriorityChip, WorkOrderStatusChip } from '../work-orders/WorkOrderChips';
 import { EmployeeStatusChip } from './EmployeeStatusChip';
 
 type InfoRow = [label: string, value: React.ReactNode];
@@ -66,6 +68,13 @@ export function EmployeeDetailPage() {
   const employee = useQuery({
     queryKey: ['employee', employeeId],
     queryFn: () => getEmployee(employeeId),
+    enabled: Number.isFinite(employeeId),
+  });
+
+  const assignedOrders = useQuery({
+    queryKey: ['employee-work-orders', employeeId],
+    queryFn: () =>
+      listWorkOrders({ assignedToId: employeeId, page: 0, size: 10, sort: 'openedAt,desc' }),
     enabled: Number.isFinite(employeeId),
   });
 
@@ -235,6 +244,39 @@ export function EmployeeDetailPage() {
                   ))}
                 </Stack>
               )}
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                Assigned work orders
+              </Typography>
+              {assignedOrders.isLoading && <CircularProgress size={24} />}
+              {assignedOrders.isError && (
+                <Alert severity="error">{getErrorMessage(assignedOrders.error)}</Alert>
+              )}
+              {assignedOrders.data?.content.length === 0 && (
+                <Typography color="text.secondary">No assigned work orders.</Typography>
+              )}
+              <Stack spacing={1}>
+                {assignedOrders.data?.content.map((order) => (
+                  <Stack key={order.id} direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                    <Typography component={Link} to={`/work-orders/${order.id}`} fontWeight={600}>
+                      #{order.id}
+                    </Typography>
+                    <Typography>
+                      {order.machine.code} · {order.machine.name}
+                    </Typography>
+                    <PriorityChip priority={order.priority} />
+                    <WorkOrderStatusChip status={order.status} />
+                    <Typography variant="caption" color="text.secondary">
+                      {formatDate(order.openedAt)}
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
             </CardContent>
           </Card>
         </Grid>

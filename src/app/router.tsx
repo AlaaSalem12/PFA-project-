@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { CircularProgress } from '@mui/material';
 import { AppLayout } from '../components/layout/AppLayout';
-import { PlaceholderPage } from '../components/PlaceholderPage';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { ForbiddenPage, NotFoundPage } from '../features/errors/ErrorPages';
 import { MachineCatalogPage } from '../features/machines/MachineCatalogPage';
@@ -12,6 +11,9 @@ import { EmployeeDetailPage } from '../features/hr/EmployeeDetailPage';
 import { EmployeeFormPage } from '../features/hr/EmployeeFormPage';
 import { EmployeesPage } from '../features/hr/EmployeesPage';
 import { OrganizationPage } from '../features/hr/OrganizationPage';
+import { MaintenancePlansPage } from '../features/maintenance-plans/MaintenancePlansPage';
+import { WorkOrderDetailPage } from '../features/work-orders/WorkOrderDetailPage';
+import { WorkOrdersPage } from '../features/work-orders/WorkOrdersPage';
 
 const LoginPage = lazy(() =>
   import('../features/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -62,7 +64,11 @@ export function AppRouter() {
               <Route path="/machines/new" element={<MachineFormPage />} />
               <Route path="/machines/:id/edit" element={<MachineFormPage />} />
             </Route>
-            <Route path="/work-orders" element={<PlaceholderPage title="Work orders" />} />
+            <Route path="/work-orders" element={<WorkOrdersPage />} />
+            <Route path="/work-orders/:id" element={<WorkOrderDetailPage />} />
+            <Route element={<ProtectedRoute roles={['ADMIN', 'PRODUCTION_MANAGER']} />}>
+              <Route path="/maintenance-plans" element={<MaintenancePlansPage />} />
+            </Route>
             <Route element={<ProtectedRoute roles={['ADMIN', 'HR_MANAGER']} />}>
               <Route path="/hr/employees" element={<EmployeesPage />} />
               <Route path="/hr/employees/new" element={<EmployeeFormPage />} />
