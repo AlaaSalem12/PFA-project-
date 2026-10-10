@@ -49,3 +49,8 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - Catalog: URL-state filters (debounced search + location, status, type), DataTable in table view, grid + MUI Pagination in card view, view choice in localStorage, images via assetUrl. New full-page `MachineFormPage` at `/machines/new` and `/machines/:id/edit` (ADMIN) with zod, server fieldErrors, image upload (immediate on edit, after create on new).
 - Detail: header with image/overdue badge, Edit/Delete (ConfirmDialog, server 409 message toasted), role-gated status dialog (OUT_OF_SERVICE exits ADMIN only), tabs Overview/History/Notes/Operators/Work orders ("Create work order" hidden: P1-17 missing).
 - Left: manual tests not run; last/next maintenance dates are sent as ISO instants from a date input (assumed backend accepts); no `/admin/machines` references were found in src.
+
+## P1-16 — HR pages
+- New `api/employees.api.ts`, `api/organization.api.ts` (departments/positions share a kind-parameterised CRUD). New `features/hr/`: EmployeesPage (URL-state search/department/position/status filters, DataTable, row click to detail), EmployeeFormPage (identity/contact/job sections, zod, server fieldErrors), EmployeeDetailPage (info cards, linked user with ADMIN-only link to /admin/users?search=, authorized machines links, Edit/Delete with 409 toast), OrganizationPage (Departments | Positions cards with FormDialog add/edit, delete disabled with tooltip when employeeCount > 0).
+- Routes: /hr/employees, /hr/employees/new, /hr/employees/:id, /hr/employees/:id/edit, /hr/organization (ADMIN + HR_MANAGER).
+- Left: assigned work orders section omitted (P1-17 not done); zod length/format limits are guesses (contract lists no backend rules); manual hr-role test not run.

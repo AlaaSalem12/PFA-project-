@@ -8,6 +8,10 @@ import { ForbiddenPage, NotFoundPage } from '../features/errors/ErrorPages';
 import { MachineCatalogPage } from '../features/machines/MachineCatalogPage';
 import { MachineDetailPage } from '../features/machines/MachineDetailPage';
 import { MachineFormPage } from '../features/machines/MachineFormPage';
+import { EmployeeDetailPage } from '../features/hr/EmployeeDetailPage';
+import { EmployeeFormPage } from '../features/hr/EmployeeFormPage';
+import { EmployeesPage } from '../features/hr/EmployeesPage';
+import { OrganizationPage } from '../features/hr/OrganizationPage';
 
 const LoginPage = lazy(() =>
   import('../features/auth/LoginPage').then((module) => ({ default: module.LoginPage })),
@@ -60,8 +64,11 @@ export function AppRouter() {
             </Route>
             <Route path="/work-orders" element={<PlaceholderPage title="Work orders" />} />
             <Route element={<ProtectedRoute roles={['ADMIN', 'HR_MANAGER']} />}>
-              <Route path="/hr/employees" element={<PlaceholderPage title="Employees" />} />
-              <Route path="/hr/organization" element={<PlaceholderPage title="Organization" />} />
+              <Route path="/hr/employees" element={<EmployeesPage />} />
+              <Route path="/hr/employees/new" element={<EmployeeFormPage />} />
+              <Route path="/hr/employees/:id" element={<EmployeeDetailPage />} />
+              <Route path="/hr/employees/:id/edit" element={<EmployeeFormPage />} />
+              <Route path="/hr/organization" element={<OrganizationPage />} />
             </Route>
             <Route element={<ProtectedRoute roles={['ADMIN']} />}>
               <Route path="/admin/users" element={<UsersPage />} />
