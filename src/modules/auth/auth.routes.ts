@@ -8,10 +8,11 @@ import { rateLimitHandler } from "../../common/rate-limit";
 import { env } from "../../config/env";
 
 export const authRouter = Router();
+// Keyed per client IP by the library's default key generator, which also groups IPv6 addresses
+// by subnet so an attacker cannot rotate addresses inside their IPv6 block to bypass the limit.
 const strictAuthLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, limit: env.NODE_ENV === "test" ? 10_000 : 10,
   standardHeaders: "draft-8", legacyHeaders: false, handler: rateLimitHandler,
-  keyGenerator: (req) => req.ip ?? "unknown",
 });
 authRouter.post("/login", strictAuthLimiter, validate({ body: loginSchema }), login);
 authRouter.post("/refresh", validate({ body: refreshSchema }), refresh);
