@@ -109,6 +109,35 @@ export class AssistantService {
     return conversation;
   }
 
+  async listConversations(userId: number) {
+    return prisma.assistantConversation.findMany({
+      where: { userId }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      select: { id: true, title: true, updatedAt: true },
+    });
+  }
+
+  async createConversation(userId: number, title?: string) {
+    const conversation = await prisma.assistantConversation.create({
+      data: { userId, title: title ? toTitle(title) : DEFAULT_TITLE },
+    });
+    return { id: conversation.id, title: conversation.title };
+  }
+
+  /** Visible history only: tool rows stay server-side. */
+  async listMessages(userId: number, conversationId: number) {
+    await this.findOwnConversation(userId, conversationId);
+    const messages = await prisma.assistantMessage.findMany({
+      where: { conversationId, role: { in: ["USER", "ASSISTANT"] } },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    });
+    return messages.map(toChatMessageDto);
+  }
+
+  async deleteConversation(userId: number, conversationId: number) {
+    await this.findOwnConversation(userId, conversationId);
+    await prisma.assistantConversation.delete({ where: { id: conversationId } });
+  }
+
   async sendMessage(user: AuthUser, conversationId: number, content: string) {
     if (!this.enabled()) throw this.unavailable();
     await this.findOwnConversation(user.id, conversationId);
