@@ -16,6 +16,8 @@ COPY package*.json ./
 # so the full dependency tree from the build stage is reused.
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# tsc does not copy non-TS assets: the assistant reads its app guide from here.
+COPY src/modules/assistant/knowledge ./dist/src/modules/assistant/knowledge
 COPY prisma ./prisma
 EXPOSE 8081
 USER node

@@ -82,6 +82,19 @@ export const mockPrisma = {
     count: jest.fn(async () => 0),
     findMany: jest.fn(async (_args?: unknown) => []),
   },
+  assistantConversation: {
+    findFirst: jest.fn(async (_args?: unknown): Promise<object | null> => null),
+    findMany: jest.fn(async (_args?: unknown): Promise<object[]> => []),
+    create: jest.fn(async ({ data }: { data: object }) => ({ id: 5, title: "Nouvelle conversation", createdAt: new Date(), updatedAt: new Date(), ...data })),
+    update: jest.fn(async (_args?: unknown) => ({})),
+    delete: jest.fn(async (_args?: unknown) => ({})),
+    deleteMany: jest.fn(async (_args?: unknown) => ({ count: 0 })),
+  },
+  assistantMessage: {
+    create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => ({ id: Math.floor(Math.random() * 1e6), createdAt: new Date(), toolCalls: null, latencyMs: null, ...data })),
+    findMany: jest.fn(async (_args?: unknown): Promise<object[]> => []),
+    count: jest.fn(async (_args?: unknown) => 1),
+  },
   $transaction: jest.fn(async (operations: unknown): Promise<unknown> =>
     typeof operations === "function" ? operations(mockPrisma) : Promise.all(operations as Promise<unknown>[])),
 };
