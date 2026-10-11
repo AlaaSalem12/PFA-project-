@@ -86,7 +86,10 @@ WorkOrder: `{id, machine:{id,code,name}, type: PREVENTIVE|CORRECTIVE, priority: 
 `mine=true` = work orders assigned to the employee linked to the current user. Assigning notifies the assignee's user (WORK_ORDER_ASSIGNED).
 
 ## §6 Maintenance plans (COULD — only if P1-08 is done)
-`{id, machine:{id,code,name}, task, frequencyDays, nextDueDate}` — CRUD `/maintenance-plans` (ADMIN, PROD_MGR), `GET /maintenance-plans/due?days=7`, `POST /maintenance-plans/:id/generate` → creates PREVENTIVE work order and moves nextDueDate forward.
+`{id, machine:{id,code,name}, task, frequencyDays, nextDueDate}` — CRUD `/maintenance-plans` (write: ADMIN, PROD_MGR; read: every role except EMPLOYEE), `GET /maintenance-plans/due?days=7`, `POST /maintenance-plans/:id/generate` → creates a PREVENTIVE MEDIUM work order and moves nextDueDate forward.
+- `GET /maintenance-plans` → Page (`page,size,machineId`, sorted by nextDueDate). `GET /maintenance-plans/due` → plain array (due within `days`, overdue included). `DELETE` → 204.
+- `POST /:id/generate` → 201 **WorkOrder** (§5). 409 if the machine is OUT_OF_SERVICE. The plan's new `nextDueDate` = max(old nextDueDate, today) + frequencyDays.
+- The machine's `nextMaintenanceDueAt` always follows its earliest plan. A background check (boot + every 6 h) creates MAINTENANCE_DUE notifications (ADMIN, PROD_MGR; max one per user and machine per day) for plans due within 1 day and machines past `nextMaintenanceDueAt`.
 
 ## §7 Notifications (all roles, own only)
 Notification: `{id, type, title, message, machineId|null, workOrderId|null, readAt|null, createdAt}`. Types: MACHINE_BREAKDOWN, MACHINE_OUT_OF_SERVICE, WORK_ORDER_ASSIGNED, MAINTENANCE_DUE, PASSWORD_RESET.
@@ -94,11 +97,12 @@ Notification: `{id, type, title, message, machineId|null, workOrderId|null, read
 
 ## §8 Dashboards
 - `GET /admin/dashboard` (ADMIN): current shape + `users.newUsersPerMonth: [{month:"2026-05", count}]` (last 6 months), `workOrders: {open, inProgress, doneThisMonth, byPriority:[{priority,count}]}`, `employees: {total, byDepartment:[{department, count}]}`.
+- Details: `newUsersPerMonth` has exactly 6 entries (oldest first, current month last, zero-filled, UTC). `workOrders.byPriority` always lists LOW, MEDIUM, HIGH, CRITICAL and counts OPEN + IN_PROGRESS orders only; `doneThisMonth` = DONE with `closedAt` in the current month. `employees.byDepartment` lists every department (zero-filled, sorted by count desc) plus `"Unassigned"` when employees have no department.
 - `GET /dashboard/me` (all roles): `{ myOpenWorkOrders: WorkOrder[] (≤5), machinesInBreakdown: number, overdueMaintenance: number, unreadNotifications: number, hr?: {employees, onLeave} (HR_MANAGER/ADMIN only) }`.
 
 ## §9 Audit (ADMIN)
 `GET /admin/audit-logs?page&size&entity&action&userId&from&to` → Page<`{id, action, entity, entityId, metadata, ip, createdAt, user:{id,username,fullName}|null}`>
-Action names: AUTH_LOGIN, AUTH_LOGIN_FAILED, AUTH_LOGOUT, AUTH_PASSWORD_CHANGED, AUTH_PASSWORD_RESET, USER_CREATED, USER_UPDATED, USER_ENABLED, USER_DISABLED, USER_PASSWORD_RESET, USER_UNLOCKED, USER_DELETED, EMPLOYEE_CREATED/UPDATED/DELETED, DEPARTMENT_*, POSITION_*, MACHINE_CREATED/UPDATED/DELETED, MACHINE_STATUS_CHANGED, MACHINE_IMAGE_UPDATED, MACHINE_NOTE_ADDED, MACHINE_OPERATORS_UPDATED, WORK_ORDER_CREATED/UPDATED/STATUS_CHANGED, ASSISTANT_MESSAGE.
+Action names: AUTH_LOGIN, AUTH_LOGIN_FAILED, AUTH_LOGOUT, AUTH_PASSWORD_CHANGED, AUTH_PASSWORD_RESET, USER_CREATED, USER_UPDATED, USER_ENABLED, USER_DISABLED, USER_PASSWORD_RESET, USER_UNLOCKED, USER_DELETED, EMPLOYEE_CREATED/UPDATED/DELETED, DEPARTMENT_*, POSITION_*, MACHINE_CREATED/UPDATED/DELETED, MACHINE_STATUS_CHANGED, MACHINE_IMAGE_UPDATED, MACHINE_NOTE_ADDED, MACHINE_OPERATORS_UPDATED, WORK_ORDER_CREATED/UPDATED/STATUS_CHANGED, MAINTENANCE_PLAN_CREATED/UPDATED/DELETED, ASSISTANT_MESSAGE.
 
 ## §10 AI assistant (Phase 2, all roles)
 | Method | Path | Notes |
@@ -108,5 +112,6 @@ Action names: AUTH_LOGIN, AUTH_LOGIN_FAILED, AUTH_LOGOUT, AUTH_PASSWORD_CHANGED,
 | POST | /assistant/conversations | → `{id, title}` |
 | GET | /assistant/conversations/:id/messages | `[{id, role: "user"\|"assistant", content, toolsUsed: string[], createdAt}]` |
 | POST | /assistant/conversations/:id/messages | {content ≤ 2000 chars} → `{userMessage, assistantMessage}`. Rate limit 30/hour/user. 503 code `ASSISTANT_UNAVAILABLE` if LLM down |
+| POST | /assistant/conversations/:id/messages/stream | (P2-06, optional) same body, rate limit and pre-checks as above (400/404/429/503 come back as JSON). Then `text/event-stream`: `event: tool` `{name}`, `event: delta` `{text}`, finally `event: done` `{userMessage, assistantMessage}` or `event: error` `{message, code}`. Clients send the Authorization header, so use `fetch` + ReadableStream (not EventSource); replace the streamed text with `assistantMessage.content` on `done`. |
 | DELETE | /assistant/conversations/:id | 204 |
 | GET | /assistant/suggestions | `string[]` example questions for the current role |
