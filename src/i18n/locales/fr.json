@@ -247,6 +247,7 @@
     "deleted": "Conversation supprimée.",
     "toolsUsed": "Outils utilisés :",
     "typing": "L’assistant écrit...",
+    "usingTool": "Outil en cours : {{tool}}",
     "input": {
       "placeholder": "Posez votre question...",
       "send": "Envoyer"

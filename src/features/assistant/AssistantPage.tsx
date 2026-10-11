@@ -122,6 +122,7 @@ export function AssistantPage() {
           messages={chat.messages}
           draft={chat.draft}
           isPending={chat.isPending}
+          streaming={chat.streaming}
           isLoading={chat.isLoading}
           onRetry={chat.retry}
           emptyContent={<SuggestionChips disabled={chat.isPending} onSelect={chat.send} />}

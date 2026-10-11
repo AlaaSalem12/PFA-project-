@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { createConversation, listMessages, sendMessage } from '../../api/assistant.api';
+import { createConversation, listMessages, sendMessageStreaming } from '../../api/assistant.api';
 import type { ChatMessage } from '../../types/api';
 import { getAssistantErrorMessage } from './assistantErrors';
 
 export interface PendingDraft {
   content: string;
   error?: string;
+}
+
+export interface StreamingState {
+  text: string;
+  tool: string | null;
 }
 
 export const assistantKeys = {
@@ -28,6 +33,7 @@ export function useAssistantChat(
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState<PendingDraft | null>(null);
+  const [streaming, setStreaming] = useState<StreamingState | null>(null);
 
   const messagesQuery = useQuery({
     queryKey: assistantKeys.messages(conversationId ?? 0),
@@ -38,7 +44,12 @@ export function useAssistantChat(
   const mutation = useMutation({
     mutationFn: async (content: string) => {
       const targetId = conversationId ?? (await createConversation()).id;
-      const result = await sendMessage(targetId, content);
+      setStreaming({ text: '', tool: null });
+      const result = await sendMessageStreaming(targetId, content, {
+        onTool: (tool) => setStreaming((prev) => ({ text: prev?.text ?? '', tool })),
+        onDelta: (text) =>
+          setStreaming((prev) => ({ text: (prev?.text ?? '') + text, tool: null })),
+      });
       return { targetId, result };
     },
     onSuccess: ({ targetId, result }) => {
@@ -51,6 +62,7 @@ export function useAssistantChat(
       setDraft(null);
       if (conversationId === undefined) onConversationCreated?.(targetId);
     },
+    onSettled: () => setStreaming(null),
     onError: (error, content) => {
       setDraft({ content, error: getAssistantErrorMessage(error, t) });
     },
@@ -72,6 +84,7 @@ export function useAssistantChat(
     isLoading: messagesQuery.isLoading,
     draft,
     isPending: mutation.isPending,
+    streaming,
     send,
     retry,
     reset: () => setDraft(null),

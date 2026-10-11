@@ -247,6 +247,7 @@
     "deleted": "Conversation deleted.",
     "toolsUsed": "Tools used:",
     "typing": "The assistant is typing...",
+    "usingTool": "Using tool: {{tool}}",
     "input": {
       "placeholder": "Ask your question...",
       "send": "Send"

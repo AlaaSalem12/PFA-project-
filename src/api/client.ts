@@ -2,7 +2,7 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../store/authStore';
 import type { ApiErrorResponse, LoginResponse } from '../types/api';
 
-const baseURL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
+export const baseURL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 export const apiClient = axios.create({
   baseURL,
@@ -42,7 +42,7 @@ apiClient.interceptors.request.use((config) => {
 /** Single in-flight refresh shared by every request that receives a 401. */
 let refreshPromise: Promise<string> | null = null;
 
-function refreshAccessToken(): Promise<string> {
+export function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       const refreshToken = useAuthStore.getState().refreshToken;
@@ -58,7 +58,7 @@ function refreshAccessToken(): Promise<string> {
   return refreshPromise;
 }
 
-function forceLogout() {
+export function forceLogout() {
   useAuthStore.getState().logout();
   if (window.location.pathname !== '/login') {
     window.location.assign('/login');

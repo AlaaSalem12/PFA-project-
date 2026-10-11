@@ -140,6 +140,7 @@ export function AssistantWidget() {
                 messages={chat.messages}
                 draft={chat.draft}
                 isPending={chat.isPending}
+                streaming={chat.streaming}
                 isLoading={chat.isLoading || waitingForList}
                 onRetry={chat.retry}
                 emptyContent={<SuggestionChips disabled={chat.isPending} onSelect={chat.send} />}

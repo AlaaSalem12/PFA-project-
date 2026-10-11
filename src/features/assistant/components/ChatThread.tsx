@@ -1,11 +1,15 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorOutline, SmartToy } from '@mui/icons-material';
 import { Avatar, Box, Button, Chip, CircularProgress, Typography } from '@mui/material';
 import { keyframes } from '@mui/material/styles';
 import type { ChatMessage } from '../../../types/api';
-import type { PendingDraft } from '../useAssistantChat';
-import { MarkdownContent } from './MarkdownContent';
+import type { PendingDraft, StreamingState } from '../useAssistantChat';
+
+// react-markdown + remark are heavy: keep them out of the main chunk.
+const MarkdownContent = lazy(() =>
+  import('./MarkdownContent').then((module) => ({ default: module.MarkdownContent })),
+);
 
 const bounce = keyframes`
   0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
@@ -16,6 +20,7 @@ export interface ChatThreadProps {
   messages: ChatMessage[];
   draft: PendingDraft | null;
   isPending: boolean;
+  streaming?: StreamingState | null;
   isLoading?: boolean;
   /** Shown when the thread has nothing to display (suggestions). */
   emptyContent?: ReactNode;
@@ -76,7 +81,15 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
             wordBreak: 'break-word',
           }}
         >
-          <MarkdownContent content={message.content} />
+          <Suspense
+            fallback={
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {message.content}
+              </Typography>
+            }
+          >
+            <MarkdownContent content={message.content} />
+          </Suspense>
         </Box>
         {message.toolsUsed.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 0.5, mt: 0.75 }}>
@@ -98,7 +111,43 @@ function AssistantBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-function TypingIndicator() {
+function StreamingBubble({ streaming }: { streaming: StreamingState }) {
+  const { t } = useTranslation();
+  return (
+    <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+      <BotAvatar />
+      <Box sx={{ maxWidth: '85%', minWidth: 0 }}>
+        <Box
+          sx={{
+            px: 1.5,
+            py: 1,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: 1,
+            borderColor: 'divider',
+            wordBreak: 'break-word',
+          }}
+        >
+          <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+            {streaming.text}
+          </Typography>
+        </Box>
+        {streaming.tool && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.75 }}>
+            <CircularProgress size={12} />
+            <Typography variant="caption" color="text.secondary">
+              {t('assistant.usingTool', {
+                tool: t(`assistant.tools.${streaming.tool}`, { defaultValue: streaming.tool }),
+              })}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function TypingIndicator({ toolName }: { toolName: string | null }) {
   const { t } = useTranslation();
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }} aria-label={t('assistant.typing')}>
@@ -129,6 +178,13 @@ function TypingIndicator() {
           />
         ))}
       </Box>
+      {toolName && (
+        <Typography variant="caption" color="text.secondary">
+          {t('assistant.usingTool', {
+            tool: t(`assistant.tools.${toolName}`, { defaultValue: toolName }),
+          })}
+        </Typography>
+      )}
     </Box>
   );
 }
@@ -137,6 +193,7 @@ export function ChatThread({
   messages,
   draft,
   isPending,
+  streaming = null,
   isLoading = false,
   emptyContent,
   onRetry,
@@ -146,7 +203,7 @@ export function ChatThread({
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages.length, draft, isPending]);
+  }, [messages.length, draft, isPending, streaming]);
 
   const isEmpty = messages.length === 0 && !draft;
 
@@ -199,7 +256,11 @@ export function ChatThread({
           </Button>
         </Box>
       )}
-      {isPending && <TypingIndicator />}
+      {isPending && streaming && streaming.text ? (
+        <StreamingBubble streaming={streaming} />
+      ) : (
+        isPending && <TypingIndicator toolName={streaming?.tool ?? null} />
+      )}
       <div ref={endRef} />
     </Box>
   );
