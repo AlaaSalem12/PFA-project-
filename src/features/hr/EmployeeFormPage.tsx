@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Alert,
   Box,
@@ -14,7 +14,9 @@ import {
 } from '@mui/material';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 import {
@@ -33,55 +35,64 @@ import { EMPLOYEE_STATUSES } from './constants';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-const employeeSchema = z
-  .object({
-    matricule: z.string().trim().min(1, 'Matricule is required').max(30, 'Matricule is too long'),
-    firstName: z
-      .string()
-      .trim()
-      .min(1, 'First name is required')
-      .max(100, 'First name is too long'),
-    lastName: z.string().trim().min(1, 'Last name is required').max(100, 'Last name is too long'),
-    birthDate: z.string(),
-    socialSecurityNumber: z.string().trim().max(30, 'Social security number is too long'),
-    phone: z
-      .string()
-      .trim()
-      .max(30, 'Phone is too long')
-      .refine((value) => value === '' || /^[+\d][\d\s().-]{5,}$/.test(value), {
-        message: 'Enter a valid phone number',
-      }),
-    email: z
-      .string()
-      .trim()
-      .max(150, 'Email is too long')
-      .refine((value) => value === '' || z.email().safeParse(value).success, {
-        message: 'Enter a valid email address',
-      }),
-    address: z.string().trim().max(300, 'Address is too long'),
-    hireDate: z.string().min(1, 'Hire date is required'),
-    departmentId: z.string(),
-    positionId: z.string(),
-    status: z.enum(['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'TERMINATED']),
-  })
-  .superRefine((values, context) => {
-    if (values.birthDate && values.birthDate > today()) {
-      context.addIssue({
-        code: 'custom',
-        path: ['birthDate'],
-        message: 'Birth date must be in the past',
-      });
-    }
-    if (values.birthDate && values.hireDate && values.birthDate >= values.hireDate) {
-      context.addIssue({
-        code: 'custom',
-        path: ['hireDate'],
-        message: 'Hire date must be after the birth date',
-      });
-    }
-  });
+const createEmployeeSchema = (t: TFunction) =>
+  z
+    .object({
+      matricule: z
+        .string()
+        .trim()
+        .min(1, t('hr.form.validation.matriculeRequired'))
+        .max(30, t('hr.form.validation.matriculeTooLong')),
+      firstName: z
+        .string()
+        .trim()
+        .min(1, t('hr.form.validation.firstNameRequired'))
+        .max(100, t('hr.form.validation.firstNameTooLong')),
+      lastName: z
+        .string()
+        .trim()
+        .min(1, t('hr.form.validation.lastNameRequired'))
+        .max(100, t('hr.form.validation.lastNameTooLong')),
+      birthDate: z.string(),
+      socialSecurityNumber: z.string().trim().max(30, t('hr.form.validation.ssnTooLong')),
+      phone: z
+        .string()
+        .trim()
+        .max(30, t('hr.form.validation.phoneTooLong'))
+        .refine((value) => value === '' || /^[+\d][\d\s().-]{5,}$/.test(value), {
+          message: t('hr.form.validation.phoneInvalid'),
+        }),
+      email: z
+        .string()
+        .trim()
+        .max(150, t('hr.form.validation.emailTooLong'))
+        .refine((value) => value === '' || z.email().safeParse(value).success, {
+          message: t('hr.form.validation.emailInvalid'),
+        }),
+      address: z.string().trim().max(300, t('hr.form.validation.addressTooLong')),
+      hireDate: z.string().min(1, t('hr.form.validation.hireDateRequired')),
+      departmentId: z.string(),
+      positionId: z.string(),
+      status: z.enum(['ACTIVE', 'ON_LEAVE', 'SUSPENDED', 'TERMINATED']),
+    })
+    .superRefine((values, context) => {
+      if (values.birthDate && values.birthDate > today()) {
+        context.addIssue({
+          code: 'custom',
+          path: ['birthDate'],
+          message: t('hr.form.validation.birthDatePast'),
+        });
+      }
+      if (values.birthDate && values.hireDate && values.birthDate >= values.hireDate) {
+        context.addIssue({
+          code: 'custom',
+          path: ['hireDate'],
+          message: t('hr.form.validation.hireAfterBirth'),
+        });
+      }
+    });
 
-type EmployeeFormValues = z.infer<typeof employeeSchema>;
+type EmployeeFormValues = z.infer<ReturnType<typeof createEmployeeSchema>>;
 
 const EMPTY_VALUES: EmployeeFormValues = {
   matricule: '',
@@ -153,6 +164,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function EmployeeFormPage() {
+  const { t } = useTranslation();
+  const employeeSchema = useMemo(() => createEmployeeSchema(t), [t]);
   const { id } = useParams();
   const employeeId = id ? Number(id) : null;
   const editing = employeeId !== null;
@@ -193,12 +206,12 @@ export function EmployeeFormPage() {
       void queryClient.invalidateQueries({ queryKey: ['employee', saved.id] });
       void queryClient.invalidateQueries({ queryKey: ['departments'] });
       void queryClient.invalidateQueries({ queryKey: ['positions'] });
-      toast.success(editing ? 'Employee updated' : 'Employee created');
+      toast.success(editing ? t('hr.form.updated') : t('hr.form.created'));
       navigate(`/hr/employees/${saved.id}`);
     },
     onError: (error) => {
       if (!applyFieldErrors<EmployeeFormValues>(error, setError)) {
-        toast.error(getErrorMessage(error, 'Employee could not be saved.'));
+        toast.error(getErrorMessage(error, t('hr.form.saveError')));
       }
     },
   });
@@ -206,7 +219,7 @@ export function EmployeeFormPage() {
   if (editing && (!Number.isFinite(employeeId) || employee.isError)) {
     return (
       <Alert severity="error">
-        {employee.isError ? getErrorMessage(employee.error) : 'Invalid employee.'}
+        {employee.isError ? getErrorMessage(employee.error) : t('hr.form.invalid')}
       </Alert>
     );
   }
@@ -223,22 +236,20 @@ export function EmployeeFormPage() {
   return (
     <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
       <PageHeader
-        title={editing ? 'Edit employee' : 'Add employee'}
-        description={
-          editing ? employee.data?.matricule : 'Register a new employee in the directory.'
-        }
+        title={editing ? t('hr.form.editTitle') : t('hr.form.createTitle')}
+        description={editing ? employee.data?.matricule : t('hr.form.createDescription')}
       />
       <Box
         component="form"
         noValidate
         onSubmit={handleSubmit((values) => saveMutation.mutate(values))}
       >
-        <Section title="Identity">
+        <Section title={t('hr.common.identity')}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               required
-              label="Matricule"
+              label={t('hr.common.matricule')}
               {...register('matricule')}
               error={!!errors.matricule}
               helperText={errors.matricule?.message}
@@ -248,7 +259,7 @@ export function EmployeeFormPage() {
             <TextField
               fullWidth
               required
-              label="First name"
+              label={t('hr.common.firstName')}
               {...register('firstName')}
               error={!!errors.firstName}
               helperText={errors.firstName?.message}
@@ -258,7 +269,7 @@ export function EmployeeFormPage() {
             <TextField
               fullWidth
               required
-              label="Last name"
+              label={t('hr.common.lastName')}
               {...register('lastName')}
               error={!!errors.lastName}
               helperText={errors.lastName?.message}
@@ -268,7 +279,7 @@ export function EmployeeFormPage() {
             <TextField
               fullWidth
               type="date"
-              label="Birth date"
+              label={t('hr.common.birthDate')}
               slotProps={{ inputLabel: { shrink: true } }}
               {...register('birthDate')}
               error={!!errors.birthDate}
@@ -278,7 +289,7 @@ export function EmployeeFormPage() {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Social security number"
+              label={t('hr.common.socialSecurityNumber')}
               {...register('socialSecurityNumber')}
               error={!!errors.socialSecurityNumber}
               helperText={errors.socialSecurityNumber?.message}
@@ -286,11 +297,11 @@ export function EmployeeFormPage() {
           </Grid>
         </Section>
 
-        <Section title="Contact">
+        <Section title={t('hr.common.contact')}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Phone"
+              label={t('hr.common.phone')}
               {...register('phone')}
               error={!!errors.phone}
               helperText={errors.phone?.message}
@@ -300,7 +311,7 @@ export function EmployeeFormPage() {
             <TextField
               fullWidth
               type="email"
-              label="Email"
+              label={t('hr.common.email')}
               {...register('email')}
               error={!!errors.email}
               helperText={errors.email?.message}
@@ -311,7 +322,7 @@ export function EmployeeFormPage() {
               fullWidth
               multiline
               minRows={2}
-              label="Address"
+              label={t('hr.common.address')}
               {...register('address')}
               error={!!errors.address}
               helperText={errors.address?.message}
@@ -319,13 +330,13 @@ export function EmployeeFormPage() {
           </Grid>
         </Section>
 
-        <Section title="Job">
+        <Section title={t('hr.common.job')}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               required
               type="date"
-              label="Hire date"
+              label={t('hr.common.hireDate')}
               slotProps={{ inputLabel: { shrink: true } }}
               {...register('hireDate')}
               error={!!errors.hireDate}
@@ -341,7 +352,7 @@ export function EmployeeFormPage() {
                   select
                   fullWidth
                   required
-                  label="Status"
+                  label={t('hr.common.status')}
                   {...field}
                   error={!!errors.status}
                   helperText={errors.status?.message}
@@ -363,12 +374,12 @@ export function EmployeeFormPage() {
                 <TextField
                   select
                   fullWidth
-                  label="Department"
+                  label={t('hr.common.department')}
                   {...field}
                   error={!!errors.departmentId}
                   helperText={errors.departmentId?.message}
                 >
-                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="">{t('hr.common.none')}</MenuItem>
                   {(departments.data ?? []).map((item) => (
                     <MenuItem key={item.id} value={String(item.id)}>
                       {item.name}
@@ -386,12 +397,12 @@ export function EmployeeFormPage() {
                 <TextField
                   select
                   fullWidth
-                  label="Position"
+                  label={t('hr.common.position')}
                   {...field}
                   error={!!errors.positionId}
                   helperText={errors.positionId?.message}
                 >
-                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="">{t('hr.common.none')}</MenuItem>
                   {(positions.data ?? []).map((item) => (
                     <MenuItem key={item.id} value={String(item.id)}>
                       {item.name}
@@ -405,7 +416,7 @@ export function EmployeeFormPage() {
 
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button component={Link} to={cancelPath} disabled={saveMutation.isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -415,7 +426,7 @@ export function EmployeeFormPage() {
               saveMutation.isPending ? <CircularProgress size={16} color="inherit" /> : undefined
             }
           >
-            {editing ? 'Save changes' : 'Create employee'}
+            {editing ? t('hr.form.saveChanges') : t('hr.form.create')}
           </Button>
         </Stack>
       </Box>

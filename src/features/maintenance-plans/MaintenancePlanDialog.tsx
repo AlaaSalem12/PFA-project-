@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Autocomplete, Stack, TextField } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { applyFieldErrors, getErrorMessage } from '../../api/errors';
 import { listMachines } from '../../api/machines.api';
@@ -13,23 +14,12 @@ import { toast } from '../../store/toastStore';
 import type { MaintenancePlan } from '../../types/api';
 import type { MachineOption } from '../work-orders/CreateWorkOrderDialog';
 
-const schema = z.object({
-  machine: z
-    .object({ id: z.number(), code: z.string(), name: z.string() })
-    .nullable()
-    .superRefine((value, ctx) => {
-      if (value === null) ctx.addIssue({ code: 'custom', message: 'Select a machine' });
-    }),
-  task: z.string().trim().min(2, 'Describe the task'),
-  frequencyDays: z
-    .string()
-    .trim()
-    .refine((value) => Number.isInteger(Number(value)) && Number(value) >= 1, {
-      message: 'Enter a number of days (1 or more)',
-    }),
-  nextDueDate: z.string().min(1, 'Select the next due date'),
-});
-type Values = z.infer<typeof schema>;
+interface Values {
+  machine: MachineOption | null;
+  task: string;
+  frequencyDays: string;
+  nextDueDate: string;
+}
 
 const FORM_ID = 'maintenance-plan-form';
 
@@ -50,7 +40,33 @@ function toDefaults(plan?: MaintenancePlan | null): Values {
 }
 
 export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDialogProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const schema = useMemo(
+    () =>
+      z.object({
+        machine: z
+          .object({ id: z.number(), code: z.string(), name: z.string() })
+          .nullable()
+          .superRefine((value, ctx) => {
+            if (value === null) {
+              ctx.addIssue({
+                code: 'custom',
+                message: t('maintenancePlans.dialog.machineRequired'),
+              });
+            }
+          }),
+        task: z.string().trim().min(2, t('maintenancePlans.dialog.taskRequired')),
+        frequencyDays: z
+          .string()
+          .trim()
+          .refine((value) => Number.isInteger(Number(value)) && Number(value) >= 1, {
+            message: t('maintenancePlans.dialog.frequencyInvalid'),
+          }),
+        nextDueDate: z.string().min(1, t('maintenancePlans.dialog.nextDueRequired')),
+      }),
+    [t],
+  );
   const isEdit = Boolean(plan);
   const [machineSearch, setMachineSearch] = useState('');
   const debouncedSearch = useDebouncedValue(machineSearch, 300);
@@ -86,7 +102,9 @@ export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDi
       return plan ? updateMaintenancePlan(plan.id, input) : createMaintenancePlan(input);
     },
     onSuccess: () => {
-      toast.success(isEdit ? 'Plan updated' : 'Plan created');
+      toast.success(
+        t(isEdit ? 'maintenancePlans.dialog.updated' : 'maintenancePlans.dialog.created'),
+      );
       void queryClient.invalidateQueries({ queryKey: ['maintenance-plans'] });
       onClose();
     },
@@ -98,9 +116,11 @@ export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDi
   return (
     <FormDialog
       open={open}
-      title={isEdit ? 'Edit maintenance plan' : 'New maintenance plan'}
+      title={t(
+        isEdit ? 'maintenancePlans.dialog.editTitle' : 'maintenancePlans.dialog.createTitle',
+      )}
       formId={FORM_ID}
-      submitLabel={isEdit ? 'Save' : 'Create'}
+      submitLabel={t(isEdit ? 'maintenancePlans.dialog.save' : 'maintenancePlans.dialog.create')}
       loading={mutation.isPending}
       onClose={onClose}
     >
@@ -129,7 +149,7 @@ export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDi
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Machine"
+                  label={t('maintenancePlans.dialog.machine')}
                   required
                   error={!!errors.machine}
                   helperText={errors.machine?.message}
@@ -139,7 +159,7 @@ export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDi
           )}
         />
         <TextField
-          label="Task"
+          label={t('maintenancePlans.dialog.task')}
           required
           multiline
           minRows={2}
@@ -150,7 +170,7 @@ export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDi
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <TextField
             fullWidth
-            label="Frequency (days)"
+            label={t('maintenancePlans.dialog.frequency')}
             type="number"
             required
             slotProps={{ htmlInput: { min: 1 } }}
@@ -160,7 +180,7 @@ export function MaintenancePlanDialog({ open, plan, onClose }: MaintenancePlanDi
           />
           <TextField
             fullWidth
-            label="Next due date"
+            label={t('maintenancePlans.dialog.nextDueDate')}
             type="date"
             required
             slotProps={{ inputLabel: { shrink: true } }}

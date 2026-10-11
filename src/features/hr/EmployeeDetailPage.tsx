@@ -14,6 +14,7 @@ import {
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { getEmployee, removeEmployee } from '../../api/employees.api';
@@ -58,6 +59,7 @@ function InfoCard({ title, rows }: { title: string; rows: InfoRow[] }) {
 }
 
 export function EmployeeDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const employeeId = Number(id);
   const navigate = useNavigate();
@@ -81,7 +83,7 @@ export function EmployeeDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => removeEmployee(employeeId),
     onSuccess: () => {
-      toast.success('Employee deleted');
+      toast.success(t('hr.detail.deleted'));
       void queryClient.invalidateQueries({ queryKey: ['employees'] });
       void queryClient.invalidateQueries({ queryKey: ['departments'] });
       void queryClient.invalidateQueries({ queryKey: ['positions'] });
@@ -89,7 +91,7 @@ export function EmployeeDetailPage() {
     },
     onError: (error) => {
       setDeleteOpen(false);
-      toast.error(getErrorMessage(error, 'Employee could not be deleted.'));
+      toast.error(getErrorMessage(error, t('hr.detail.deleteError')));
     },
   });
 
@@ -102,9 +104,7 @@ export function EmployeeDetailPage() {
   }
   if (employee.isError || !employee.data) {
     return (
-      <Alert severity="error">
-        {getErrorMessage(employee.error, 'Employee could not be loaded.')}
-      </Alert>
+      <Alert severity="error">{getErrorMessage(employee.error, t('hr.detail.loadError'))}</Alert>
     );
   }
 
@@ -120,7 +120,7 @@ export function EmployeeDetailPage() {
         action={
           <Stack direction="row" spacing={1}>
             <Button component={Link} to="/hr/employees">
-              Back to employees
+              {t('hr.detail.back')}
             </Button>
             <Button
               component={Link}
@@ -128,7 +128,7 @@ export function EmployeeDetailPage() {
               variant="outlined"
               startIcon={<EditOutlinedIcon />}
             >
-              Edit
+              {t('hr.common.edit')}
             </Button>
             <Button
               color="error"
@@ -136,7 +136,7 @@ export function EmployeeDetailPage() {
               startIcon={<DeleteOutlineIcon />}
               onClick={() => setDeleteOpen(true)}
             >
-              Delete
+              {t('hr.common.delete')}
             </Button>
           </Stack>
         }
@@ -156,7 +156,7 @@ export function EmployeeDetailPage() {
               </Stack>
               <Typography color="text.secondary">
                 {[current.position?.name, current.department?.name].filter(Boolean).join(' · ') ||
-                  'No position or department'}
+                  t('hr.detail.noPositionOrDepartment')}
               </Typography>
             </Box>
           </Stack>
@@ -166,34 +166,34 @@ export function EmployeeDetailPage() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
           <InfoCard
-            title="Identity"
+            title={t('hr.common.identity')}
             rows={[
-              ['Matricule', current.matricule],
-              ['First name', current.firstName],
-              ['Last name', current.lastName],
-              ['Birth date', current.birthDate ? formatDate(current.birthDate) : null],
-              ['Social security number', current.socialSecurityNumber],
+              [t('hr.common.matricule'), current.matricule],
+              [t('hr.common.firstName'), current.firstName],
+              [t('hr.common.lastName'), current.lastName],
+              [t('hr.common.birthDate'), current.birthDate ? formatDate(current.birthDate) : null],
+              [t('hr.common.socialSecurityNumber'), current.socialSecurityNumber],
             ]}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <InfoCard
-            title="Contact"
+            title={t('hr.common.contact')}
             rows={[
-              ['Phone', current.phone],
-              ['Email', current.email],
-              ['Address', current.address],
+              [t('hr.common.phone'), current.phone],
+              [t('hr.common.email'), current.email],
+              [t('hr.common.address'), current.address],
             ]}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <InfoCard
-            title="Job"
+            title={t('hr.common.job')}
             rows={[
-              ['Hire date', formatDate(current.hireDate)],
-              ['Status', formatEnum(current.status)],
-              ['Department', current.department?.name],
-              ['Position', current.position?.name],
+              [t('hr.common.hireDate'), formatDate(current.hireDate)],
+              [t('hr.common.status'), formatEnum(current.status)],
+              [t('hr.common.department'), current.department?.name],
+              [t('hr.common.position'), current.position?.name],
             ]}
           />
         </Grid>
@@ -201,7 +201,7 @@ export function EmployeeDetailPage() {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 1 }}>
-                User account
+                {t('hr.detail.userAccount')}
               </Typography>
               {current.user ? (
                 <Stack spacing={0.5}>
@@ -214,13 +214,13 @@ export function EmployeeDetailPage() {
                         to={`/admin/users?search=${encodeURIComponent(current.user.username)}`}
                         size="small"
                       >
-                        Open in users
+                        {t('hr.detail.openInUsers')}
                       </Button>
                     </Box>
                   )}
                 </Stack>
               ) : (
-                <Typography color="text.secondary">No linked user account.</Typography>
+                <Typography color="text.secondary">{t('hr.detail.noUser')}</Typography>
               )}
             </CardContent>
           </Card>
@@ -229,10 +229,10 @@ export function EmployeeDetailPage() {
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 1 }}>
-                Authorized machines
+                {t('hr.detail.authorizedMachines')}
               </Typography>
               {current.authorizedMachines.length === 0 ? (
-                <Typography color="text.secondary">No authorized machines.</Typography>
+                <Typography color="text.secondary">{t('hr.detail.noMachines')}</Typography>
               ) : (
                 <Stack spacing={0.5}>
                   {current.authorizedMachines.map((machine) => (
@@ -251,14 +251,14 @@ export function EmployeeDetailPage() {
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 1 }}>
-                Assigned work orders
+                {t('hr.detail.assignedOrders')}
               </Typography>
               {assignedOrders.isLoading && <CircularProgress size={24} />}
               {assignedOrders.isError && (
                 <Alert severity="error">{getErrorMessage(assignedOrders.error)}</Alert>
               )}
               {assignedOrders.data?.content.length === 0 && (
-                <Typography color="text.secondary">No assigned work orders.</Typography>
+                <Typography color="text.secondary">{t('hr.detail.noOrders')}</Typography>
               )}
               <Stack spacing={1}>
                 {assignedOrders.data?.content.map((order) => (
@@ -284,9 +284,9 @@ export function EmployeeDetailPage() {
 
       <ConfirmDialog
         open={deleteOpen}
-        title="Delete employee"
-        message={`${fullName} will be removed from the directory.`}
-        confirmLabel="Delete"
+        title={t('hr.detail.deleteTitle')}
+        message={t('hr.detail.deleteMessage', { name: fullName })}
+        confirmLabel={t('hr.common.delete')}
         danger
         loading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate()}

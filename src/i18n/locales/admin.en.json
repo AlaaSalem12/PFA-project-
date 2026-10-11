@@ -1,0 +1,133 @@
+{
+  "users": {
+    "title": "Users",
+    "description": "Manage workspace accounts, roles and access.",
+    "new": "New user",
+    "searchPlaceholder": "Search name, email or username",
+    "filterRole": "Role",
+    "filterStatus": "Status",
+    "allRoles": "All roles",
+    "allStatuses": "All",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "never": "Never",
+    "columns": {
+      "name": "Name",
+      "username": "Username",
+      "role": "Role",
+      "status": "Status",
+      "lastLogin": "Last login",
+      "employee": "Linked employee"
+    },
+    "status": {
+      "active": "Active",
+      "disabled": "Disabled",
+      "lockedUntil": "Locked until {{date}}"
+    },
+    "actions": {
+      "label": "Actions for {{name}}",
+      "edit": "Edit",
+      "disable": "Disable",
+      "enable": "Enable",
+      "reset": "Reset password",
+      "unlock": "Unlock",
+      "delete": "Delete"
+    },
+    "confirm": {
+      "disableTitle": "Disable user",
+      "disableMessage": "{{name}} will no longer be able to sign in.",
+      "resetTitle": "Reset password",
+      "resetMessage": "{{name}} will receive a new temporary password and must change it at next sign-in.",
+      "deleteTitle": "Delete user",
+      "deleteMessage": "{{name}} will be removed from the workspace."
+    },
+    "empty": {
+      "noMatch": "No users match your filters",
+      "noMatchText": "Try a different search or clear the filters.",
+      "none": "No users yet"
+    },
+    "toast": {
+      "credentialsSent": "Credentials sent by email",
+      "enabled": "User enabled",
+      "disabled": "User disabled",
+      "unlocked": "User unlocked",
+      "deleted": "User deleted",
+      "updated": "User updated"
+    },
+    "form": {
+      "titleNew": "New user",
+      "titleEdit": "Edit user",
+      "create": "Create",
+      "fullName": "Full name",
+      "email": "Email",
+      "username": "Username",
+      "usernameHelper": "Leave empty to generate",
+      "role": "Role",
+      "employee": "Linked employee (optional)",
+      "fullNameRequired": "Enter the full name",
+      "emailInvalid": "Enter a valid email"
+    },
+    "tempPassword": {
+      "title": "Temporary password",
+      "shareWith": "Share this password with {{username}}.",
+      "shareGeneric": "Share this password with the user.",
+      "mustChange": "They must change it at first sign-in.",
+      "copy": "Copy password",
+      "copied": "Password copied",
+      "copyFailed": "Could not copy. Select the password and copy it manually.",
+      "notShown": "It will not be shown again.",
+      "done": "Done"
+    }
+  },
+  "audit": {
+    "title": "Audit log",
+    "description": "A transparent record of changes made across MetalWorks.",
+    "columns": {
+      "date": "Date",
+      "action": "Action",
+      "entity": "Entity",
+      "user": "User",
+      "ip": "IP"
+    },
+    "system": "System",
+    "allActions": "All actions",
+    "filters": {
+      "action": "Action",
+      "entity": "Entity",
+      "user": "User",
+      "from": "From",
+      "to": "To"
+    },
+    "clearFilters": "Clear filters",
+    "loadError": "Audit activity could not be loaded.",
+    "empty": {
+      "title": "No activity found",
+      "text": "Administrative actions matching the filters will appear here."
+    },
+    "noMetadata": "No metadata for this entry.",
+    "close": "Close"
+  },
+  "notifications": {
+    "description": "Alerts about machines and work orders.",
+    "unreadOnly": "Unread only",
+    "empty": {
+      "title": "No notifications",
+      "text": "Nothing to show here yet."
+    }
+  },
+  "profile": {
+    "eyebrow": "Account settings",
+    "title": "My profile",
+    "subtitle": "Review your identity and workspace access.",
+    "fields": {
+      "fullName": "Full name",
+      "username": "Username",
+      "email": "Email",
+      "role": "Role",
+      "lastLogin": "Last login",
+      "employee": "Linked employee"
+    },
+    "notLinked": "Not linked",
+    "changePassword": "Change password →"
+  }
+}

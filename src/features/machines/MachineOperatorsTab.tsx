@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Autocomplete, Box, Button, Chip, Stack, TextField, Typography } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { getErrorMessage } from '../../api/errors';
 import { setMachineOperators } from '../../api/machines.api';
 import { listEmployeeOptions } from '../../api/users.api';
@@ -11,6 +12,7 @@ import type { EmployeeOption, MachineDetail } from '../../types/api';
 import { OPERATOR_EDIT_ROLES } from './constants';
 
 export function MachineOperatorsTab({ machine }: { machine: MachineDetail }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<EmployeeOption[]>([]);
@@ -40,7 +42,7 @@ export function MachineOperatorsTab({ machine }: { machine: MachineDetail }) {
         selected.map((employee) => employee.id),
       ),
     onSuccess: () => {
-      toast.success('Operators updated');
+      toast.success(t('machines.operators.updated'));
       setEditing(false);
       void queryClient.invalidateQueries({ queryKey: ['machine', machine.id] });
     },
@@ -57,7 +59,7 @@ export function MachineOperatorsTab({ machine }: { machine: MachineDetail }) {
       {!editing && (
         <>
           {current.length === 0 ? (
-            <Typography color="text.secondary">No authorized operators yet.</Typography>
+            <Typography color="text.secondary">{t('machines.operators.none')}</Typography>
           ) : (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {current.map((operator) => (
@@ -72,7 +74,7 @@ export function MachineOperatorsTab({ machine }: { machine: MachineDetail }) {
           <RoleGate roles={OPERATOR_EDIT_ROLES}>
             <Box>
               <Button variant="outlined" onClick={startEditing}>
-                Edit operators
+                {t('machines.operators.edit')}
               </Button>
             </Box>
           </RoleGate>
@@ -93,15 +95,19 @@ export function MachineOperatorsTab({ machine }: { machine: MachineDetail }) {
             isOptionEqualToValue={(option, value) => option.id === value.id}
             getOptionLabel={(option) => `${option.fullName} (${option.matricule})`}
             renderInput={(params) => (
-              <TextField {...params} label="Authorized operators" placeholder="Search employees" />
+              <TextField
+                {...params}
+                label={t('machines.operators.label')}
+                placeholder={t('machines.operators.searchPlaceholder')}
+              />
             )}
           />
           <Stack direction="row" spacing={1}>
             <Button onClick={() => setEditing(false)} disabled={save.isPending}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="contained" onClick={() => save.mutate()} disabled={save.isPending}>
-              {save.isPending ? 'Saving...' : 'Save operators'}
+              {save.isPending ? t('machines.operators.saving') : t('machines.operators.save')}
             </Button>
           </Stack>
         </>

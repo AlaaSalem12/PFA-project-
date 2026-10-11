@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
+import { useTranslation } from 'react-i18next';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -40,9 +41,9 @@ import {
 import { getErrorMessage } from '../../api/errors';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from '../../store/toastStore';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, formatEnum } from '../../utils/format';
 import type { SafeUser, UserCreateResponse, UserRole } from '../../types/api';
-import { ROLE_LABELS, ROLES } from './roles';
+import { ROLES } from './roles';
 import { UserFormDialog } from './UserFormDialog';
 import { TemporaryPasswordDialog } from './TemporaryPasswordDialog';
 
@@ -53,17 +54,18 @@ function isLocked(user: SafeUser): boolean {
 }
 
 function StatusCell({ user }: { user: SafeUser }) {
+  const { t } = useTranslation();
   if (isLocked(user)) {
     return (
       <Chip
         size="small"
         color="warning"
-        label={`Locked until ${formatDateTime(user.lockedUntil)}`}
+        label={t('users.status.lockedUntil', { date: formatDateTime(user.lockedUntil) })}
       />
     );
   }
-  if (!user.enabled) return <Chip size="small" label="Disabled" />;
-  return <Chip size="small" color="success" label="Active" />;
+  if (!user.enabled) return <Chip size="small" label={t('users.status.disabled')} />;
+  return <Chip size="small" color="success" label={t('users.status.active')} />;
 }
 
 interface RowActionsProps {
@@ -76,6 +78,7 @@ interface RowActionsProps {
 }
 
 function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActionsProps) {
+  const { t } = useTranslation();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const close = () => setAnchor(null);
   const run = (callback: () => void) => () => {
@@ -87,7 +90,7 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
     <>
       <IconButton
         size="small"
-        aria-label={`Actions for ${user.fullName}`}
+        aria-label={t('users.actions.label', { name: user.fullName })}
         onClick={(event) => setAnchor(event.currentTarget)}
       >
         <MoreVertIcon fontSize="small" />
@@ -97,14 +100,14 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
           <ListItemIcon>
             <EditOutlinedIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
+          <ListItemText>{t('users.actions.edit')}</ListItemText>
         </MenuItem>
         {!isSelf && user.enabled && (
           <MenuItem onClick={run(() => onAsk({ kind: 'disable', user }))}>
             <ListItemIcon>
               <BlockIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Disable</ListItemText>
+            <ListItemText>{t('users.actions.disable')}</ListItemText>
           </MenuItem>
         )}
         {!isSelf && !user.enabled && (
@@ -112,7 +115,7 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
             <ListItemIcon>
               <CheckCircleOutlineIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Enable</ListItemText>
+            <ListItemText>{t('users.actions.enable')}</ListItemText>
           </MenuItem>
         )}
         {!isSelf && (
@@ -120,7 +123,7 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
             <ListItemIcon>
               <LockResetIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Reset password</ListItemText>
+            <ListItemText>{t('users.actions.reset')}</ListItemText>
           </MenuItem>
         )}
         {isLocked(user) && (
@@ -128,7 +131,7 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
             <ListItemIcon>
               <LockOpenIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Unlock</ListItemText>
+            <ListItemText>{t('users.actions.unlock')}</ListItemText>
           </MenuItem>
         )}
         {!isSelf && (
@@ -139,7 +142,7 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
             <ListItemIcon sx={{ color: 'inherit' }}>
               <DeleteOutlineIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <ListItemText>{t('users.actions.delete')}</ListItemText>
           </MenuItem>
         )}
       </Menu>
@@ -148,6 +151,7 @@ function RowActions({ user, isSelf, onEdit, onEnable, onAsk, onUnlock }: RowActi
 }
 
 export function UsersPage() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const currentUserId = useAuthStore((state) => state.user?.id);
   const urlState = useUrlState({ defaultSize: 20, defaultSort: 'id,desc' });
@@ -179,7 +183,7 @@ export function UsersPage() {
     if (result.temporaryPassword) {
       setCredentials({ password: result.temporaryPassword, username: result.user.username });
     } else {
-      toast.success('Credentials sent by email');
+      toast.success(t('users.toast.credentialsSent'));
     }
   };
 
@@ -187,7 +191,7 @@ export function UsersPage() {
     mutationFn: ({ user, enabled }: { user: SafeUser; enabled: boolean }) =>
       setUserEnabled(user.id, enabled),
     onSuccess: (saved) => {
-      toast.success(saved.enabled ? 'User enabled' : 'User disabled');
+      toast.success(saved.enabled ? t('users.toast.enabled') : t('users.toast.disabled'));
       setPending(null);
       afterChange();
     },
@@ -207,7 +211,7 @@ export function UsersPage() {
   const unlockMutation = useMutation({
     mutationFn: (user: SafeUser) => unlockUser(user.id),
     onSuccess: () => {
-      toast.success('User unlocked');
+      toast.success(t('users.toast.unlocked'));
       afterChange();
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -216,7 +220,7 @@ export function UsersPage() {
   const deleteMutation = useMutation({
     mutationFn: (user: SafeUser) => removeUser(user.id),
     onSuccess: () => {
-      toast.success('User deleted');
+      toast.success(t('users.toast.deleted'));
       setPending(null);
       afterChange();
     },
@@ -227,7 +231,7 @@ export function UsersPage() {
     () => [
       {
         field: 'fullName',
-        headerName: 'Name',
+        headerName: t('users.columns.name'),
         flex: 1.4,
         minWidth: 200,
         renderCell: ({ row }) => (
@@ -241,19 +245,24 @@ export function UsersPage() {
           </Box>
         ),
       },
-      { field: 'username', headerName: 'Username', flex: 0.8, minWidth: 120 },
+      { field: 'username', headerName: t('users.columns.username'), flex: 0.8, minWidth: 120 },
       {
         field: 'role',
-        headerName: 'Role',
+        headerName: t('users.columns.role'),
         flex: 1,
         minWidth: 160,
         renderCell: ({ row }) => (
-          <Chip size="small" variant="outlined" color="primary" label={ROLE_LABELS[row.role]} />
+          <Chip
+            size="small"
+            variant="outlined"
+            color="primary"
+            label={formatEnum(row.role, 'UserRole')}
+          />
         ),
       },
       {
         field: 'enabled',
-        headerName: 'Status',
+        headerName: t('users.columns.status'),
         sortable: false,
         flex: 1,
         minWidth: 190,
@@ -261,14 +270,14 @@ export function UsersPage() {
       },
       {
         field: 'lastLoginAt',
-        headerName: 'Last login',
+        headerName: t('users.columns.lastLogin'),
         flex: 1,
         minWidth: 160,
-        valueFormatter: (value: string | null) => formatDateTime(value, 'Never'),
+        valueFormatter: (value: string | null) => formatDateTime(value, t('users.never')),
       },
       {
         field: 'employee',
-        headerName: 'Linked employee',
+        headerName: t('users.columns.employee'),
         sortable: false,
         flex: 1,
         minWidth: 170,
@@ -297,29 +306,29 @@ export function UsersPage() {
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentUserId],
+    [currentUserId, i18n.language],
   );
 
   const hasFilters = Boolean(search || filters.role || filters.enabled);
 
   const confirmCopy = {
     disable: {
-      title: 'Disable user',
-      confirmLabel: 'Disable',
+      title: t('users.confirm.disableTitle'),
+      confirmLabel: t('users.actions.disable'),
       danger: false,
-      text: 'will no longer be able to sign in.',
+      message: (name: string) => t('users.confirm.disableMessage', { name }),
     },
     reset: {
-      title: 'Reset password',
-      confirmLabel: 'Reset password',
+      title: t('users.confirm.resetTitle'),
+      confirmLabel: t('users.actions.reset'),
       danger: false,
-      text: 'will receive a new temporary password and must change it at next sign-in.',
+      message: (name: string) => t('users.confirm.resetMessage', { name }),
     },
     delete: {
-      title: 'Delete user',
-      confirmLabel: 'Delete',
+      title: t('users.confirm.deleteTitle'),
+      confirmLabel: t('users.actions.delete'),
       danger: true,
-      text: 'will be removed from the workspace.',
+      message: (name: string) => t('users.confirm.deleteMessage', { name }),
     },
   };
 
@@ -333,8 +342,8 @@ export function UsersPage() {
   return (
     <Box>
       <PageHeader
-        title="Users"
-        description="Manage workspace accounts, roles and access."
+        title={t('users.title')}
+        description={t('users.description')}
         action={
           <Button
             variant="contained"
@@ -344,7 +353,7 @@ export function UsersPage() {
               setFormOpen(true);
             }}
           >
-            New user
+            {t('users.new')}
           </Button>
         }
       />
@@ -352,7 +361,7 @@ export function UsersPage() {
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <TextField
           size="small"
-          placeholder="Search name, email or username"
+          placeholder={t('users.searchPlaceholder')}
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
           sx={{ minWidth: { sm: 300 } }}
@@ -369,29 +378,29 @@ export function UsersPage() {
         <TextField
           select
           size="small"
-          label="Role"
+          label={t('users.filterRole')}
           value={filters.role ?? ''}
           onChange={(event) => setFilter('role', event.target.value || null)}
           sx={{ minWidth: 200 }}
         >
-          <MenuItem value="">All roles</MenuItem>
+          <MenuItem value="">{t('users.allRoles')}</MenuItem>
           {ROLES.map((role: UserRole) => (
             <MenuItem key={role} value={role}>
-              {ROLE_LABELS[role]}
+              {formatEnum(role, 'UserRole')}
             </MenuItem>
           ))}
         </TextField>
         <TextField
           select
           size="small"
-          label="Status"
+          label={t('users.filterStatus')}
           value={filters.enabled ?? ''}
           onChange={(event) => setFilter('enabled', event.target.value || null)}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="true">Enabled</MenuItem>
-          <MenuItem value="false">Disabled</MenuItem>
+          <MenuItem value="">{t('users.allStatuses')}</MenuItem>
+          <MenuItem value="true">{t('users.enabled')}</MenuItem>
+          <MenuItem value="false">{t('users.disabled')}</MenuItem>
         </TextField>
       </Stack>
 
@@ -406,8 +415,8 @@ export function UsersPage() {
         onSortModelChange={urlState.setSortModel}
         emptyState={
           <EmptyState
-            title={hasFilters ? 'No users match your filters' : 'No users yet'}
-            text={hasFilters ? 'Try a different search or clear the filters.' : undefined}
+            title={hasFilters ? t('users.empty.noMatch') : t('users.empty.none')}
+            text={hasFilters ? t('users.empty.noMatchText') : undefined}
           />
         }
       />
@@ -422,7 +431,7 @@ export function UsersPage() {
       <ConfirmDialog
         open={pending !== null}
         title={pending ? confirmCopy[pending.kind].title : ''}
-        message={pending ? `${pending.user.fullName} ${confirmCopy[pending.kind].text}` : ''}
+        message={pending ? confirmCopy[pending.kind].message(pending.user.fullName) : ''}
         confirmLabel={pending ? confirmCopy[pending.kind].confirmLabel : undefined}
         danger={pending ? confirmCopy[pending.kind].danger : false}
         loading={enableMutation.isPending || resetMutation.isPending || deleteMutation.isPending}

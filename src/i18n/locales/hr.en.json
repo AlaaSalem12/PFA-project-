@@ -1,0 +1,118 @@
+{
+  "hr": {
+    "common": {
+      "matricule": "Matricule",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "birthDate": "Birth date",
+      "socialSecurityNumber": "Social security number",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "hireDate": "Hire date",
+      "status": "Status",
+      "department": "Department",
+      "position": "Position",
+      "name": "Name",
+      "description": "Description",
+      "identity": "Identity",
+      "contact": "Contact",
+      "job": "Job",
+      "none": "None",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add"
+    },
+    "list": {
+      "title": "Employees",
+      "description": "Manage the workforce directory.",
+      "add": "Add employee",
+      "searchPlaceholder": "Search name or matricule",
+      "allDepartments": "All departments",
+      "allPositions": "All positions",
+      "allStatuses": "All statuses",
+      "emptyFiltered": "No employees match your filters",
+      "emptyFilteredText": "Try a different search or clear the filters.",
+      "empty": "No employees yet"
+    },
+    "form": {
+      "editTitle": "Edit employee",
+      "createTitle": "Add employee",
+      "createDescription": "Register a new employee in the directory.",
+      "updated": "Employee updated",
+      "created": "Employee created",
+      "saveError": "Employee could not be saved.",
+      "invalid": "Invalid employee.",
+      "saveChanges": "Save changes",
+      "create": "Create employee",
+      "validation": {
+        "matriculeRequired": "Matricule is required",
+        "matriculeTooLong": "Matricule is too long",
+        "firstNameRequired": "First name is required",
+        "firstNameTooLong": "First name is too long",
+        "lastNameRequired": "Last name is required",
+        "lastNameTooLong": "Last name is too long",
+        "ssnTooLong": "Social security number is too long",
+        "phoneTooLong": "Phone is too long",
+        "phoneInvalid": "Enter a valid phone number",
+        "emailTooLong": "Email is too long",
+        "emailInvalid": "Enter a valid email address",
+        "addressTooLong": "Address is too long",
+        "hireDateRequired": "Hire date is required",
+        "birthDatePast": "Birth date must be in the past",
+        "hireAfterBirth": "Hire date must be after the birth date"
+      }
+    },
+    "detail": {
+      "back": "Back to employees",
+      "noPositionOrDepartment": "No position or department",
+      "userAccount": "User account",
+      "openInUsers": "Open in users",
+      "noUser": "No linked user account.",
+      "authorizedMachines": "Authorized machines",
+      "noMachines": "No authorized machines.",
+      "assignedOrders": "Assigned work orders",
+      "noOrders": "No assigned work orders.",
+      "deleted": "Employee deleted",
+      "deleteError": "Employee could not be deleted.",
+      "loadError": "Employee could not be loaded.",
+      "deleteTitle": "Delete employee",
+      "deleteMessage": "{{name}} will be removed from the directory."
+    },
+    "organization": {
+      "title": "Organization",
+      "description": "Manage departments and positions.",
+      "departments": "Departments",
+      "positions": "Positions",
+      "emptyDepartments": "No departments yet",
+      "emptyPositions": "No positions yet",
+      "employeeCount_one": "{{count}} employee",
+      "employeeCount_other": "{{count}} employees",
+      "cannotDelete": "Cannot delete: {{count}} employee(s) assigned",
+      "deleteItem": "Delete {{name}}",
+      "editItem": "Edit {{name}}",
+      "permanentlyRemoved": "{{name}} will be permanently removed.",
+      "department": {
+        "created": "Department created",
+        "updated": "Department updated",
+        "deleted": "Department deleted",
+        "add": "Add department",
+        "edit": "Edit department",
+        "delete": "Delete department"
+      },
+      "position": {
+        "created": "Position created",
+        "updated": "Position updated",
+        "deleted": "Position deleted",
+        "add": "Add position",
+        "edit": "Edit position",
+        "delete": "Delete position"
+      },
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameTooLong": "Name is too long",
+        "descriptionTooLong": "Description is too long"
+      }
+    }
+  }
+}

@@ -22,6 +22,7 @@ import {
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { getErrorMessage } from '../../api/errors';
@@ -57,22 +58,34 @@ function isOverdue(machine: MachineDetail): boolean {
 }
 
 function OverviewTab({ machine }: { machine: MachineDetail }) {
+  const { t } = useTranslation();
   const specs: Array<[string, string | number | null | undefined]> = [
-    ['Brand', machine.brand],
-    ['Model', machine.model],
-    ['Serial number', machine.serialNumber],
-    ['Workshop', machine.workshop],
-    ['Location', machine.location],
-    ['Purchase date', machine.purchaseDate ? formatDate(machine.purchaseDate) : null],
-    ['Hourly cost', machine.hourlyCost != null ? formatMoney(machine.hourlyCost) : null],
-    ['Operating hours', machine.operatingHours],
+    [t('machines.fields.brand'), machine.brand],
+    [t('machines.fields.model'), machine.model],
+    [t('machines.fields.serialNumber'), machine.serialNumber],
+    [t('machines.fields.workshop'), machine.workshop],
+    [t('machines.fields.location'), machine.location],
     [
-      'Maintenance interval',
-      machine.maintenanceIntervalDays ? `${machine.maintenanceIntervalDays} days` : null,
+      t('machines.fields.purchaseDate'),
+      machine.purchaseDate ? formatDate(machine.purchaseDate) : null,
     ],
-    ['Last maintenance', machine.lastMaintenanceAt ? formatDate(machine.lastMaintenanceAt) : null],
     [
-      'Next maintenance',
+      t('machines.fields.hourlyCost'),
+      machine.hourlyCost != null ? formatMoney(machine.hourlyCost) : null,
+    ],
+    [t('machines.fields.operatingHours'), machine.operatingHours],
+    [
+      t('machines.fields.maintenanceInterval'),
+      machine.maintenanceIntervalDays
+        ? t('machines.detail.days', { count: machine.maintenanceIntervalDays })
+        : null,
+    ],
+    [
+      t('machines.fields.lastMaintenance'),
+      machine.lastMaintenanceAt ? formatDate(machine.lastMaintenanceAt) : null,
+    ],
+    [
+      t('machines.fields.nextMaintenance'),
       machine.nextMaintenanceDueAt ? formatDate(machine.nextMaintenanceDueAt) : null,
     ],
   ];
@@ -80,7 +93,7 @@ function OverviewTab({ machine }: { machine: MachineDetail }) {
     <Stack spacing={2}>
       {isOverdue(machine) && (
         <Alert severity="warning">
-          Maintenance was due on {formatDate(machine.nextMaintenanceDueAt)}.
+          {t('machines.detail.dueOn', { date: formatDate(machine.nextMaintenanceDueAt) })}
         </Alert>
       )}
       <Grid container columnSpacing={4}>
@@ -105,7 +118,7 @@ function OverviewTab({ machine }: { machine: MachineDetail }) {
       {machine.notes && (
         <Box>
           <Typography variant="overline" color="text.secondary">
-            Notes
+            {t('machines.detail.notesLabel')}
           </Typography>
           <Typography sx={{ whiteSpace: 'pre-wrap' }}>{machine.notes}</Typography>
         </Box>
@@ -115,6 +128,7 @@ function OverviewTab({ machine }: { machine: MachineDetail }) {
 }
 
 function HistoryTab({ machineId }: { machineId: number }) {
+  const { t } = useTranslation();
   const history = useQuery({
     queryKey: ['machine-history', machineId],
     queryFn: () => getMachineHistory(machineId),
@@ -122,13 +136,15 @@ function HistoryTab({ machineId }: { machineId: number }) {
   if (history.isLoading) return <CircularProgress size={24} />;
   if (history.isError) return <Alert severity="error">{getErrorMessage(history.error)}</Alert>;
   if (!history.data?.length)
-    return <Typography color="text.secondary">No status changes yet.</Typography>;
+    return <Typography color="text.secondary">{t('machines.history.empty')}</Typography>;
   return (
     <Stack spacing={1.5}>
       {history.data.map((item) => (
         <Box key={item.id} sx={{ borderLeft: 2, borderColor: 'primary.main', pl: 2, py: 0.5 }}>
           <Typography fontWeight={600}>
-            {item.fromStatus ? `${formatEnum(item.fromStatus)} → ` : 'Initial status: '}
+            {item.fromStatus
+              ? `${formatEnum(item.fromStatus)} → `
+              : t('machines.history.initialStatus')}
             {formatEnum(item.toStatus)}
           </Typography>
           {item.comment && <Typography variant="body2">{item.comment}</Typography>}
@@ -142,6 +158,7 @@ function HistoryTab({ machineId }: { machineId: number }) {
 }
 
 function NotesTab({ machineId }: { machineId: number }) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const notes = useQuery({
@@ -152,7 +169,7 @@ function NotesTab({ machineId }: { machineId: number }) {
     mutationFn: () => addMachineNote(machineId, text.trim()),
     onSuccess: () => {
       setText('');
-      toast.success('Note added');
+      toast.success(t('machines.notes.added'));
       void queryClient.invalidateQueries({ queryKey: ['machine-notes', machineId] });
     },
     onError: (error) => toast.error(getErrorMessage(error)),
@@ -166,7 +183,7 @@ function NotesTab({ machineId }: { machineId: number }) {
             fullWidth
             multiline
             minRows={2}
-            label="Add a maintenance note"
+            label={t('machines.notes.addLabel')}
             value={text}
             onChange={(event) => setText(event.target.value)}
           />
@@ -175,20 +192,21 @@ function NotesTab({ machineId }: { machineId: number }) {
             disabled={!text.trim() || add.isPending}
             onClick={() => add.mutate()}
           >
-            {add.isPending ? 'Adding...' : 'Add note'}
+            {add.isPending ? t('machines.notes.adding') : t('machines.notes.add')}
           </Button>
         </Stack>
       </RoleGate>
       {notes.isLoading && <CircularProgress size={24} />}
       {notes.isError && <Alert severity="error">{getErrorMessage(notes.error)}</Alert>}
       {notes.data?.length === 0 && (
-        <Typography color="text.secondary">No maintenance notes yet.</Typography>
+        <Typography color="text.secondary">{t('machines.notes.empty')}</Typography>
       )}
       {notes.data?.map((item) => (
         <Box key={item.id} borderBottom={1} borderColor="divider" pb={1}>
           <Typography sx={{ whiteSpace: 'pre-wrap' }}>{item.note}</Typography>
           <Typography variant="caption" color="text.secondary">
-            {item.createdBy?.fullName ?? 'Unknown'} · {formatDateTime(item.createdAt)}
+            {item.createdBy?.fullName ?? t('machines.notes.unknownAuthor')} ·{' '}
+            {formatDateTime(item.createdAt)}
           </Typography>
         </Box>
       ))}
@@ -197,6 +215,7 @@ function NotesTab({ machineId }: { machineId: number }) {
 }
 
 function WorkOrdersTab({ machine }: { machine: MachineDetail }) {
+  const { t } = useTranslation();
   const role = useAuthStore((state) => state.user?.role);
   const canCreate = Boolean(role && WORK_ORDER_WRITE_ROLES.includes(role));
   const [createOpen, setCreateOpen] = useState(false);
@@ -210,14 +229,14 @@ function WorkOrdersTab({ machine }: { machine: MachineDetail }) {
       {canCreate && (
         <Box>
           <Button variant="contained" onClick={() => setCreateOpen(true)}>
-            Create work order
+            {t('machines.workOrders.create')}
           </Button>
         </Box>
       )}
       {workOrders.isLoading && <CircularProgress size={24} />}
       {workOrders.isError && <Alert severity="error">{getErrorMessage(workOrders.error)}</Alert>}
       {workOrders.data?.length === 0 && (
-        <Typography color="text.secondary">No work orders for this machine.</Typography>
+        <Typography color="text.secondary">{t('machines.workOrders.empty')}</Typography>
       )}
       {workOrders.data?.map((order) => (
         <Box key={order.id} borderBottom={1} borderColor="divider" pb={1}>
@@ -233,7 +252,7 @@ function WorkOrdersTab({ machine }: { machine: MachineDetail }) {
             {order.description}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Opened {formatDateTime(order.openedAt)}
+            {t('machines.workOrders.opened', { date: formatDateTime(order.openedAt) })}
             {order.assignedTo
               ? ` · ${order.assignedTo.firstName} ${order.assignedTo.lastName}`
               : ''}
@@ -250,6 +269,7 @@ function WorkOrdersTab({ machine }: { machine: MachineDetail }) {
 }
 
 export function MachineDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const machineId = Number(id);
   const navigate = useNavigate();
@@ -272,7 +292,7 @@ export function MachineDetailPage() {
   const statusMutation = useMutation({
     mutationFn: () => updateMachineStatus(machineId, status, comment.trim() || undefined),
     onSuccess: () => {
-      toast.success('Status updated');
+      toast.success(t('machines.detail.statusUpdated'));
       void queryClient.invalidateQueries({ queryKey: ['machine', machineId] });
       void queryClient.invalidateQueries({ queryKey: ['machine-history', machineId] });
       void queryClient.invalidateQueries({ queryKey: ['machines'] });
@@ -285,13 +305,13 @@ export function MachineDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => deleteMachine(machineId),
     onSuccess: () => {
-      toast.success('Machine deleted');
+      toast.success(t('machines.detail.deleted'));
       void queryClient.invalidateQueries({ queryKey: ['machines'] });
       navigate('/machines');
     },
     onError: (error) => {
       setDeleteOpen(false);
-      toast.error(getErrorMessage(error, 'Machine could not be deleted.'));
+      toast.error(getErrorMessage(error, t('machines.detail.deleteFailed')));
     },
   });
 
@@ -305,7 +325,7 @@ export function MachineDetailPage() {
   if (machine.isError || !machine.data) {
     return (
       <Alert severity="error">
-        {getErrorMessage(machine.error, 'Machine could not be loaded.')}
+        {getErrorMessage(machine.error, t('machines.detail.loadFailed'))}
       </Alert>
     );
   }
@@ -329,7 +349,7 @@ export function MachineDetailPage() {
         action={
           <Stack direction="row" spacing={1}>
             <Button component={Link} to="/machines">
-              Back to catalog
+              {t('machines.detail.backToCatalog')}
             </Button>
             {isAdmin && (
               <>
@@ -339,7 +359,7 @@ export function MachineDetailPage() {
                   variant="outlined"
                   startIcon={<EditOutlinedIcon />}
                 >
-                  Edit
+                  {t('machines.detail.edit')}
                 </Button>
                 <Button
                   color="error"
@@ -347,7 +367,7 @@ export function MachineDetailPage() {
                   startIcon={<DeleteOutlineIcon />}
                   onClick={() => setDeleteOpen(true)}
                 >
-                  Delete
+                  {t('machines.detail.delete')}
                 </Button>
               </>
             )}
@@ -391,18 +411,18 @@ export function MachineDetailPage() {
             </Box>
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="overline" color="text.secondary">
-                Current maintenance status
+                {t('machines.detail.currentStatus')}
               </Typography>
               <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap" sx={{ mt: 0.5 }}>
                 <StatusChip status={current.maintenanceStatus} />
                 {isOverdue(current) && (
-                  <Chip size="small" color="warning" label="Maintenance overdue" />
+                  <Chip size="small" color="warning" label={t('machines.detail.overdue')} />
                 )}
               </Stack>
             </Box>
             {allowed.length > 0 && (
               <Button variant="contained" onClick={openStatusDialog}>
-                Update status
+                {t('machines.detail.updateStatus')}
               </Button>
             )}
           </Stack>
@@ -416,11 +436,11 @@ export function MachineDetailPage() {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab label="Overview" />
-          <Tab label="History" />
-          <Tab label="Notes" />
-          <Tab label="Operators" />
-          <Tab label="Work orders" />
+          <Tab label={t('machines.detail.tabs.overview')} />
+          <Tab label={t('machines.detail.tabs.history')} />
+          <Tab label={t('machines.detail.tabs.notes')} />
+          <Tab label={t('machines.detail.tabs.operators')} />
+          <Tab label={t('machines.detail.tabs.workOrders')} />
         </Tabs>
         <CardContent>
           {tab === 0 && <OverviewTab machine={current} />}
@@ -432,12 +452,12 @@ export function MachineDetailPage() {
       </Card>
 
       <Dialog open={statusOpen} onClose={() => setStatusOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>Update maintenance status</DialogTitle>
+        <DialogTitle>{t('machines.detail.statusDialog.title')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <TextField
               select
-              label="New status"
+              label={t('machines.detail.statusDialog.newStatus')}
               value={status}
               onChange={(event) => setStatus(event.target.value as MachineStatus)}
             >
@@ -448,35 +468,40 @@ export function MachineDetailPage() {
               ))}
             </TextField>
             <TextField
-              label="Comment"
+              label={t('machines.detail.statusDialog.comment')}
               value={comment}
               onChange={(event) => setComment(event.target.value)}
               required={commentRequired}
               multiline
               minRows={3}
-              helperText={commentRequired ? 'Required for this status' : undefined}
+              helperText={
+                commentRequired ? t('machines.detail.statusDialog.commentRequired') : undefined
+              }
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setStatusOpen(false)} disabled={statusMutation.isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="contained"
             disabled={statusMutation.isPending || (commentRequired && !comment.trim())}
             onClick={() => statusMutation.mutate()}
           >
-            {statusMutation.isPending ? 'Saving...' : 'Confirm'}
+            {statusMutation.isPending ? t('machines.detail.saving') : t('common.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <ConfirmDialog
         open={deleteOpen}
-        title="Delete machine"
-        message={`Delete ${current.name} (${current.code})? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('machines.detail.deleteDialog.title')}
+        message={t('machines.detail.deleteDialog.message', {
+          name: current.name,
+          code: current.code,
+        })}
+        confirmLabel={t('machines.detail.delete')}
         danger
         loading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate()}

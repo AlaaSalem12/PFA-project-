@@ -1,0 +1,151 @@
+{
+  "machines": {
+    "catalog": {
+      "title": "Machines",
+      "descriptionAdmin": "Tenez votre parc de machines à jour et exploitable.",
+      "descriptionUser": "Consultez les équipements et leur état de maintenance.",
+      "add": "Ajouter une machine",
+      "searchPlaceholder": "Rechercher par code, nom ou numéro de série",
+      "filters": {
+        "status": "Statut",
+        "type": "Type",
+        "location": "Emplacement",
+        "allStatuses": "Tous les statuts",
+        "allTypes": "Tous les types"
+      },
+      "cardView": "Vue en cartes",
+      "tableView": "Vue en tableau",
+      "columns": {
+        "machine": "Machine",
+        "type": "Type",
+        "location": "Emplacement",
+        "status": "Statut",
+        "nextMaintenance": "Prochaine maintenance"
+      },
+      "emptyTitle": "Aucune machine trouvée",
+      "emptyFiltered": "Aucune machine ne correspond aux filtres sélectionnés.",
+      "emptyNone": "Aucune machine enregistrée pour le moment."
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Nom",
+      "type": "Type",
+      "brand": "Marque",
+      "model": "Modèle",
+      "serialNumber": "Numéro de série",
+      "workshop": "Atelier",
+      "location": "Emplacement",
+      "purchaseDate": "Date d'achat",
+      "hourlyCost": "Coût horaire",
+      "operatingHours": "Heures de fonctionnement",
+      "maintenanceInterval": "Intervalle de maintenance",
+      "interval": "Intervalle",
+      "lastMaintenance": "Dernière maintenance",
+      "nextMaintenance": "Prochaine maintenance",
+      "notes": "Notes"
+    },
+    "detail": {
+      "days_one": "{{count}} jour",
+      "days_other": "{{count}} jours",
+      "dueOn": "La maintenance était prévue le {{date}}.",
+      "notesLabel": "Notes",
+      "statusUpdated": "Statut mis à jour",
+      "deleted": "Machine supprimée",
+      "deleteFailed": "Impossible de supprimer la machine.",
+      "loadFailed": "Impossible de charger la machine.",
+      "backToCatalog": "Retour au catalogue",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "currentStatus": "État de maintenance actuel",
+      "overdue": "Maintenance en retard",
+      "updateStatus": "Changer le statut",
+      "saving": "Enregistrement...",
+      "tabs": {
+        "overview": "Aperçu",
+        "history": "Historique",
+        "notes": "Notes",
+        "operators": "Opérateurs",
+        "workOrders": "Ordres de travail"
+      },
+      "statusDialog": {
+        "title": "Mettre à jour l'état de maintenance",
+        "newStatus": "Nouveau statut",
+        "comment": "Commentaire",
+        "commentRequired": "Obligatoire pour ce statut"
+      },
+      "deleteDialog": {
+        "title": "Supprimer la machine",
+        "message": "Supprimer {{name}} ({{code}}) ? Cette action est irréversible."
+      }
+    },
+    "history": {
+      "empty": "Aucun changement de statut pour le moment.",
+      "initialStatus": "Statut initial : "
+    },
+    "notes": {
+      "added": "Note ajoutée",
+      "addLabel": "Ajouter une note de maintenance",
+      "adding": "Ajout...",
+      "add": "Ajouter la note",
+      "empty": "Aucune note de maintenance pour le moment.",
+      "unknownAuthor": "Inconnu"
+    },
+    "workOrders": {
+      "create": "Créer un ordre de travail",
+      "empty": "Aucun ordre de travail pour cette machine.",
+      "opened": "Ouvert le {{date}}"
+    },
+    "operators": {
+      "updated": "Opérateurs mis à jour",
+      "none": "Aucun opérateur autorisé pour le moment.",
+      "edit": "Modifier les opérateurs",
+      "label": "Opérateurs autorisés",
+      "searchPlaceholder": "Rechercher des employés",
+      "saving": "Enregistrement...",
+      "save": "Enregistrer les opérateurs"
+    },
+    "form": {
+      "validation": {
+        "required": "{{label}} est obligatoire",
+        "tooLong": "{{label}} est trop long",
+        "positiveNumber": "{{label}} doit être un nombre positif",
+        "wholeNumber": "{{label}} doit être un nombre entier"
+      },
+      "imageUpdated": "Image mise à jour",
+      "imageUploadFailed": "Impossible de téléverser l'image.",
+      "updated": "Machine mise à jour",
+      "created": "Machine créée",
+      "savedImageFailed": "Machine enregistrée, mais l'image n'a pas pu être téléversée.",
+      "saveFailed": "Impossible d'enregistrer la machine.",
+      "imageError": {
+        "type": "Utilisez une image JPEG, PNG ou WebP.",
+        "size": "L'image ne doit pas dépasser 5 Mo."
+      },
+      "invalid": "Machine invalide.",
+      "editTitle": "Modifier la machine",
+      "addTitle": "Ajouter une machine",
+      "addDescription": "Enregistrez une nouvelle machine dans le catalogue des équipements.",
+      "sections": {
+        "identity": "Identification",
+        "location": "Emplacement",
+        "finance": "Finances et utilisation",
+        "maintenance": "Maintenance",
+        "notes": "Notes",
+        "image": "Image"
+      },
+      "hourlyCostTnd": "Coût horaire (TND)",
+      "intervalDays": "Intervalle (jours)",
+      "nextMaintenanceDue": "Prochaine maintenance prévue",
+      "imageHintEdit": "L'image est téléversée dès que vous choisissez un fichier.",
+      "imageHintCreate": "L'image est téléversée après la création de la machine.",
+      "previewAlt": "Aperçu de la machine",
+      "noImage": "Aucune image",
+      "uploading": "Téléversement...",
+      "chooseImage": "Choisir une image",
+      "imageFormats": "JPEG, PNG ou WebP, 5 Mo maximum.",
+      "saving": "Enregistrement...",
+      "saveChanges": "Enregistrer les modifications",
+      "create": "Créer la machine"
+    }
+  }
+}

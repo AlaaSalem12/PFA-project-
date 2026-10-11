@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '../../api/errors';
 import {
@@ -34,6 +35,7 @@ import { formatDate } from '../../utils/format';
 import { MaintenancePlanDialog } from './MaintenancePlanDialog';
 
 export function MaintenancePlansPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dueOnly, setDueOnly] = useState(false);
@@ -49,7 +51,7 @@ export function MaintenancePlansPage() {
   const generate = useMutation({
     mutationFn: (plan: MaintenancePlan) => generateWorkOrder(plan.id),
     onSuccess: (order) => {
-      toast.success(`Work order #${order.id} generated`);
+      toast.success(t('maintenancePlans.generated', { id: order.id }));
       void queryClient.invalidateQueries({ queryKey: ['maintenance-plans'] });
       void queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       navigate(`/work-orders/${order.id}`);
@@ -60,13 +62,13 @@ export function MaintenancePlansPage() {
   const remove = useMutation({
     mutationFn: (plan: MaintenancePlan) => deleteMaintenancePlan(plan.id),
     onSuccess: () => {
-      toast.success('Plan deleted');
+      toast.success(t('maintenancePlans.deleted'));
       setDeleting(null);
       void queryClient.invalidateQueries({ queryKey: ['maintenance-plans'] });
     },
     onError: (error) => {
       setDeleting(null);
-      toast.error(getErrorMessage(error, 'Plan could not be deleted.'));
+      toast.error(getErrorMessage(error, t('maintenancePlans.deleteError')));
     },
   });
 
@@ -84,18 +86,18 @@ export function MaintenancePlansPage() {
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
       <PageHeader
-        title="Maintenance plans"
-        description="Recurring preventive maintenance tasks per machine."
+        title={t('maintenancePlans.title')}
+        description={t('maintenancePlans.description')}
         action={
           <Button startIcon={<AddIcon />} variant="contained" onClick={openCreate}>
-            Add plan
+            {t('maintenancePlans.add')}
           </Button>
         }
       />
       <Stack direction="row" mb={2}>
         <FormControlLabel
           control={<Switch checked={dueOnly} onChange={(_, checked) => setDueOnly(checked)} />}
-          label="Due in 7 days"
+          label={t('maintenancePlans.dueIn7Days')}
         />
       </Stack>
 
@@ -103,8 +105,8 @@ export function MaintenancePlansPage() {
       {plans.isError && <Alert severity="error">{getErrorMessage(plans.error)}</Alert>}
       {plans.isSuccess && rows.length === 0 && (
         <EmptyState
-          title="No maintenance plans"
-          text={dueOnly ? 'Nothing is due in the next 7 days.' : 'No plans created yet.'}
+          title={t('maintenancePlans.emptyTitle')}
+          text={dueOnly ? t('maintenancePlans.emptyDue') : t('maintenancePlans.emptyNone')}
         />
       )}
       {rows.length > 0 && (
@@ -113,11 +115,11 @@ export function MaintenancePlansPage() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Machine</TableCell>
-                  <TableCell>Task</TableCell>
-                  <TableCell>Every (days)</TableCell>
-                  <TableCell>Next due</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>{t('maintenancePlans.columns.machine')}</TableCell>
+                  <TableCell>{t('maintenancePlans.columns.task')}</TableCell>
+                  <TableCell>{t('maintenancePlans.columns.every')}</TableCell>
+                  <TableCell>{t('maintenancePlans.columns.nextDue')}</TableCell>
+                  <TableCell align="right">{t('maintenancePlans.columns.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -139,13 +141,13 @@ export function MaintenancePlansPage() {
                           disabled={generate.isPending}
                           onClick={() => generate.mutate(plan)}
                         >
-                          Generate work order
+                          {t('maintenancePlans.generate')}
                         </Button>
                         <Button size="small" onClick={() => openEdit(plan)}>
-                          Edit
+                          {t('maintenancePlans.edit')}
                         </Button>
                         <Button size="small" color="error" onClick={() => setDeleting(plan)}>
-                          Delete
+                          {t('maintenancePlans.delete')}
                         </Button>
                       </Stack>
                     </TableCell>
@@ -164,9 +166,9 @@ export function MaintenancePlansPage() {
       />
       <ConfirmDialog
         open={deleting !== null}
-        title="Delete maintenance plan"
-        message={`Delete the plan "${deleting?.task ?? ''}"? This cannot be undone.`}
-        confirmLabel="Delete"
+        title={t('maintenancePlans.deleteTitle')}
+        message={t('maintenancePlans.deleteMessage', { task: deleting?.task ?? '' })}
+        confirmLabel={t('maintenancePlans.delete')}
         danger
         loading={remove.isPending}
         onConfirm={() => deleting && remove.mutate(deleting)}

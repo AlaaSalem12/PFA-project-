@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router-dom';
 import { getErrorMessage } from '../../api/errors';
 import { listEmployeeOptions } from '../../api/users.api';
@@ -79,6 +80,7 @@ interface EditDialogProps {
 }
 
 function EditWorkOrderDialog({ open, order, onClose }: EditDialogProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [priority, setPriority] = useState<WorkOrderPriority>(order.priority);
   const [assignee, setAssignee] = useState<EmployeeOption | null>(
@@ -106,7 +108,7 @@ function EditWorkOrderDialog({ open, order, onClose }: EditDialogProps) {
         assignedToId: assignee ? assignee.id : null,
       }),
     onSuccess: () => {
-      toast.success('Work order updated');
+      toast.success(t('workOrders.detail.updated'));
       void queryClient.invalidateQueries({ queryKey: ['work-order', order.id] });
       void queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       void queryClient.invalidateQueries({ queryKey: ['machine-work-orders'] });
@@ -119,7 +121,7 @@ function EditWorkOrderDialog({ open, order, onClose }: EditDialogProps) {
   return (
     <FormDialog
       open={open}
-      title="Edit work order"
+      title={t('workOrders.detail.editTitle')}
       formId={EDIT_FORM_ID}
       loading={mutation.isPending}
       onClose={onClose}
@@ -135,7 +137,7 @@ function EditWorkOrderDialog({ open, order, onClose }: EditDialogProps) {
       >
         <TextField
           select
-          label="Priority"
+          label={t('workOrders.detail.priority')}
           value={priority}
           onChange={(event) => setPriority(event.target.value as WorkOrderPriority)}
         >
@@ -158,7 +160,9 @@ function EditWorkOrderDialog({ open, order, onClose }: EditDialogProps) {
             if (reason === 'input') setSearch(text);
           }}
           onChange={(_, value) => setAssignee(value)}
-          renderInput={(params) => <TextField {...params} label="Assignee" />}
+          renderInput={(params) => (
+            <TextField {...params} label={t('workOrders.detail.assignee')} />
+          )}
         />
       </Stack>
     </FormDialog>
@@ -166,6 +170,7 @@ function EditWorkOrderDialog({ open, order, onClose }: EditDialogProps) {
 }
 
 export function WorkOrderDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const orderId = Number(id);
   const queryClient = useQueryClient();
@@ -185,7 +190,7 @@ export function WorkOrderDetailPage() {
   const statusMutation = useMutation({
     mutationFn: (status: WorkOrderStatus) => updateWorkOrderStatus(orderId, { status }),
     onSuccess: () => {
-      toast.success('Status updated');
+      toast.success(t('workOrders.detail.statusUpdated'));
       void queryClient.invalidateQueries({ queryKey: ['work-order', orderId] });
       void queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       void queryClient.invalidateQueries({ queryKey: ['machine-work-orders'] });
@@ -204,7 +209,7 @@ export function WorkOrderDetailPage() {
   if (order.isError || !order.data) {
     return (
       <Alert severity="error">
-        {getErrorMessage(order.error, 'Work order could not be loaded.')}
+        {getErrorMessage(order.error, t('workOrders.detail.loadError'))}
       </Alert>
     );
   }
@@ -216,12 +221,12 @@ export function WorkOrderDetailPage() {
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
       <PageHeader
-        title={`Work order #${current.id}`}
+        title={t('workOrders.detail.title', { id: current.id })}
         description={`${current.machine.code} · ${current.machine.name}`}
         action={
           <Stack direction="row" spacing={1}>
             <Button component={Link} to="/work-orders">
-              Back to work orders
+              {t('workOrders.detail.back')}
             </Button>
             {canEdit && !isDone && (
               <Button
@@ -229,7 +234,7 @@ export function WorkOrderDetailPage() {
                 startIcon={<EditOutlinedIcon />}
                 onClick={() => setEditOpen(true)}
               >
-                Edit
+                {t('workOrders.detail.edit')}
               </Button>
             )}
           </Stack>
@@ -253,7 +258,7 @@ export function WorkOrderDetailPage() {
                 {transitions.map((target) =>
                   target === 'DONE' ? (
                     <Button key={target} variant="contained" onClick={() => setCloseOpen(true)}>
-                      Close
+                      {t('workOrders.detail.close')}
                     </Button>
                   ) : (
                     <Button
@@ -264,9 +269,9 @@ export function WorkOrderDetailPage() {
                     >
                       {target === 'IN_PROGRESS'
                         ? current.status === 'OPEN'
-                          ? 'Start'
-                          : 'Resume'
-                        : `Move to ${formatEnum(target)}`}
+                          ? t('workOrders.detail.start')
+                          : t('workOrders.detail.resume')
+                        : t('workOrders.detail.moveTo', { status: formatEnum(target) })}
                     </Button>
                   ),
                 )}
@@ -279,32 +284,32 @@ export function WorkOrderDetailPage() {
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
           <InfoCard
-            title="Details"
+            title={t('workOrders.detail.detailsTitle')}
             rows={[
               [
-                'Machine',
+                t('workOrders.detail.machine'),
                 <Link to={`/machines/${current.machine.id}`}>{current.machine.name}</Link>,
               ],
-              ['Type', formatEnum(current.type)],
+              [t('workOrders.detail.type'), formatEnum(current.type)],
               [
-                'Assignee',
+                t('workOrders.detail.assignee'),
                 current.assignedTo
                   ? `${current.assignedTo.firstName} ${current.assignedTo.lastName}`
                   : null,
               ],
-              ['Created by', current.createdBy?.fullName],
-              ['Opened', formatDateTime(current.openedAt)],
-              ['Closed', formatDateTime(current.closedAt)],
+              [t('workOrders.detail.createdBy'), current.createdBy?.fullName],
+              [t('workOrders.detail.opened'), formatDateTime(current.openedAt)],
+              [t('workOrders.detail.closed'), formatDateTime(current.closedAt)],
             ]}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <InfoCard
-            title="Outcome"
+            title={t('workOrders.detail.outcomeTitle')}
             rows={[
-              ['Resolution', current.resolution],
-              ['Cost', formatMoney(current.cost)],
-              ['Parts used', current.partsUsed],
+              [t('workOrders.detail.resolution'), current.resolution],
+              [t('workOrders.detail.cost'), formatMoney(current.cost)],
+              [t('workOrders.detail.partsUsed'), current.partsUsed],
             ]}
           />
         </Grid>
@@ -312,7 +317,7 @@ export function WorkOrderDetailPage() {
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 1 }}>
-                Description
+                {t('workOrders.detail.descriptionTitle')}
               </Typography>
               <Typography sx={{ whiteSpace: 'pre-wrap' }}>{current.description}</Typography>
             </CardContent>

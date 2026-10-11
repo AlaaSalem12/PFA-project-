@@ -172,3 +172,12 @@ Claude Code appends here after each task: `## PX-YY — <title> (date)` + 3–5 
 - `useAssistantChat` exposes `streaming {text, tool}`; `ChatThread` renders a progressive bubble and "Using tool: …" (`assistant.usingTool` in fr/en); on `done` the stored `assistantMessage.content` replaces the streamed text. Widget and page pass `streaming`.
 - P2-04 fix: `MarkdownContent` is `React.lazy` inside ChatThread, so react-markdown/remark are a separate 160 kB chunk. Main chunk 626.51 kB (198.71 gzip) -> 460.29 kB (148.20 gzip). tsc, lint, build pass.
 - Left: manual streaming check against a live LLM.
+
+## Fix — auth rate limiter IPv6 keying (backend)
+- `express-rate-limit` logged ERR_ERL_KEY_GEN_IPV6 at startup: the strict login/forgot/reset limiter used a custom `keyGenerator` returning the raw `req.ip`, so an IPv6 client could rotate addresses inside its block to bypass the 10/15 min limit. Removed the custom generator; the library default keys by IP and groups IPv6 by subnet. Warning gone, 78 tests pass.
+
+## UI polish: full FR/EN translation, back button, navbar fixes (2026-10-11)
+- All pages now translated (machines, work orders, maintenance plans, HR, users, audit, notifications, profile); zod validation messages and DataGrid texts follow the language. Per-area locale files `src/i18n/locales/<area>.<lang>.json` are merged by `src/i18n/index.ts` (626 keys, fr/en in sync).
+- `BackButton` shown on every page except /dashboard (history back, else parent page).
+- AppLayout: single `md` breakpoint for permanent vs temporary drawer (was 900px vs 1023px, both drawers could be active); selected nav dot positioned; rail icons centered.
+- Left: "template bugs" not yet identified; not tested in a browser; audit action codes and server messages stay untranslated.

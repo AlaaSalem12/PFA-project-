@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Autocomplete, MenuItem, Stack, TextField } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { FormDialog } from '../../components/FormDialog';
 import { applyFieldErrors, getErrorMessage } from '../../api/errors';
@@ -15,23 +16,26 @@ import {
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { toast } from '../../store/toastStore';
 import type { EmployeeOption, SafeUser, UserCreateResponse } from '../../types/api';
-import { ROLE_LABELS, ROLES } from './roles';
+import { formatEnum } from '../../utils/format';
+import { ROLES } from './roles';
 
-const schema = z.object({
-  fullName: z.string().trim().min(2, 'Enter the full name'),
-  email: z.string().trim().email('Enter a valid email'),
-  username: z.string().trim().optional(),
-  role: z.enum(['ADMIN', 'HR_MANAGER', 'PRODUCTION_MANAGER', 'MAINTENANCE_TECH', 'EMPLOYEE']),
-  employee: z
-    .object({
-      id: z.number(),
-      matricule: z.string(),
-      fullName: z.string(),
-      position: z.string().optional(),
-    })
-    .nullable(),
-});
-type Values = z.infer<typeof schema>;
+function buildSchema(t: (key: string) => string) {
+  return z.object({
+    fullName: z.string().trim().min(2, t('users.form.fullNameRequired')),
+    email: z.string().trim().email(t('users.form.emailInvalid')),
+    username: z.string().trim().optional(),
+    role: z.enum(['ADMIN', 'HR_MANAGER', 'PRODUCTION_MANAGER', 'MAINTENANCE_TECH', 'EMPLOYEE']),
+    employee: z
+      .object({
+        id: z.number(),
+        matricule: z.string(),
+        fullName: z.string(),
+        position: z.string().optional(),
+      })
+      .nullable(),
+  });
+}
+type Values = z.infer<ReturnType<typeof buildSchema>>;
 
 const FORM_ID = 'user-form';
 
@@ -60,6 +64,8 @@ function toDefaults(user?: SafeUser | null): Values {
 }
 
 export function UserFormDialog({ open, user, onClose, onCreated }: UserFormDialogProps) {
+  const { t } = useTranslation();
+  const schema = useMemo(() => buildSchema(t), [t]);
   const queryClient = useQueryClient();
   const isEdit = Boolean(user);
   const [employeeSearch, setEmployeeSearch] = useState('');
@@ -109,7 +115,7 @@ export function UserFormDialog({ open, user, onClose, onCreated }: UserFormDialo
       void queryClient.invalidateQueries({ queryKey: ['users'] });
       onClose();
       if (result.created) onCreated(result.created);
-      else toast.success('User updated');
+      else toast.success(t('users.toast.updated'));
     },
     onError: (error) => {
       if (!applyFieldErrors<Values>(error, setError)) toast.error(getErrorMessage(error));
@@ -119,9 +125,9 @@ export function UserFormDialog({ open, user, onClose, onCreated }: UserFormDialo
   return (
     <FormDialog
       open={open}
-      title={isEdit ? 'Edit user' : 'New user'}
+      title={isEdit ? t('users.form.titleEdit') : t('users.form.titleNew')}
       formId={FORM_ID}
-      submitLabel={isEdit ? 'Save' : 'Create'}
+      submitLabel={isEdit ? t('common.save') : t('users.form.create')}
       loading={mutation.isPending}
       onClose={onClose}
     >
@@ -133,25 +139,27 @@ export function UserFormDialog({ open, user, onClose, onCreated }: UserFormDialo
         onSubmit={handleSubmit((values) => mutation.mutate(values))}
       >
         <TextField
-          label="Full name"
+          label={t('users.form.fullName')}
           autoFocus
           {...register('fullName')}
           error={!!errors.fullName}
           helperText={errors.fullName?.message}
         />
         <TextField
-          label="Email"
+          label={t('users.form.email')}
           type="email"
           {...register('email')}
           error={!!errors.email}
           helperText={errors.email?.message}
         />
         <TextField
-          label="Username"
+          label={t('users.form.username')}
           disabled={isEdit}
           {...register('username')}
           error={!!errors.username}
-          helperText={errors.username?.message ?? (isEdit ? undefined : 'Leave empty to generate')}
+          helperText={
+            errors.username?.message ?? (isEdit ? undefined : t('users.form.usernameHelper'))
+          }
         />
         <Controller
           name="role"
@@ -159,14 +167,14 @@ export function UserFormDialog({ open, user, onClose, onCreated }: UserFormDialo
           render={({ field }) => (
             <TextField
               select
-              label="Role"
+              label={t('users.form.role')}
               {...field}
               error={!!errors.role}
               helperText={errors.role?.message}
             >
               {ROLES.map((role) => (
                 <MenuItem key={role} value={role}>
-                  {ROLE_LABELS[role]}
+                  {formatEnum(role, 'UserRole')}
                 </MenuItem>
               ))}
             </TextField>
@@ -190,7 +198,7 @@ export function UserFormDialog({ open, user, onClose, onCreated }: UserFormDialo
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Linked employee (optional)"
+                  label={t('users.form.employee')}
                   error={!!errors.employee}
                   helperText={errors.employee?.message}
                 />

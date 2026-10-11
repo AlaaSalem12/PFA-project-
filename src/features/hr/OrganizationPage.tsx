@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Box,
@@ -21,7 +21,9 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { applyFieldErrors, getErrorMessage } from '../../api/errors';
 import {
@@ -39,22 +41,31 @@ import { PageHeader } from '../../components/PageHeader';
 import { toast } from '../../store/toastStore';
 import type { Department } from '../../types/api';
 
-const itemSchema = z.object({
-  name: z.string().trim().min(2, 'Name is required').max(100, 'Name is too long'),
-  description: z.string().trim().max(300, 'Description is too long'),
-});
+const createItemSchema = (t: TFunction) =>
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(2, t('hr.organization.validation.nameRequired'))
+      .max(100, t('hr.organization.validation.nameTooLong')),
+    description: z.string().trim().max(300, t('hr.organization.validation.descriptionTooLong')),
+  });
 
-type ItemFormValues = z.infer<typeof itemSchema>;
+type ItemFormValues = z.infer<ReturnType<typeof createItemSchema>>;
+
+const singularKey = (kind: OrganizationKind) =>
+  kind === 'departments' ? 'department' : 'position';
 
 interface ItemFormDialogProps {
   kind: OrganizationKind;
-  singular: string;
   open: boolean;
   item: Department | null;
   onClose: () => void;
 }
 
-function ItemFormDialog({ kind, singular, open, item, onClose }: ItemFormDialogProps) {
+function ItemFormDialog({ kind, open, item, onClose }: ItemFormDialogProps) {
+  const { t } = useTranslation();
+  const itemSchema = useMemo(() => createItemSchema(t), [t]);
   const queryClient = useQueryClient();
   const formId = `${kind}-form`;
   const {
@@ -83,7 +94,7 @@ function ItemFormDialog({ kind, singular, open, item, onClose }: ItemFormDialogP
         : createOrganizationItem(kind, input);
     },
     onSuccess: () => {
-      toast.success(item ? `${singular} updated` : `${singular} created`);
+      toast.success(t(`hr.organization.${singularKey(kind)}.${item ? 'updated' : 'created'}`));
       void queryClient.invalidateQueries({ queryKey: [kind] });
       void queryClient.invalidateQueries({ queryKey: ['employees'] });
       onClose();
@@ -98,7 +109,7 @@ function ItemFormDialog({ kind, singular, open, item, onClose }: ItemFormDialogP
   return (
     <FormDialog
       open={open}
-      title={item ? `Edit ${singular.toLowerCase()}` : `Add ${singular.toLowerCase()}`}
+      title={t(`hr.organization.${singularKey(kind)}.${item ? 'edit' : 'add'}`)}
       formId={formId}
       loading={saveMutation.isPending}
       onClose={onClose}
@@ -114,7 +125,7 @@ function ItemFormDialog({ kind, singular, open, item, onClose }: ItemFormDialogP
             autoFocus
             fullWidth
             required
-            label="Name"
+            label={t('hr.common.name')}
             {...register('name')}
             error={!!errors.name}
             helperText={errors.name?.message}
@@ -123,7 +134,7 @@ function ItemFormDialog({ kind, singular, open, item, onClose }: ItemFormDialogP
             fullWidth
             multiline
             minRows={2}
-            label="Description"
+            label={t('hr.common.description')}
             {...register('description')}
             error={!!errors.description}
             helperText={errors.description?.message}
@@ -137,10 +148,10 @@ function ItemFormDialog({ kind, singular, open, item, onClose }: ItemFormDialogP
 interface OrganizationCardProps {
   kind: OrganizationKind;
   title: string;
-  singular: string;
 }
 
-function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
+function OrganizationCard({ kind, title }: OrganizationCardProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
@@ -154,7 +165,7 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
   const deleteMutation = useMutation({
     mutationFn: (item: Department) => removeOrganizationItem(kind, item.id),
     onSuccess: () => {
-      toast.success(`${singular} deleted`);
+      toast.success(t(`hr.organization.${singularKey(kind)}.deleted`));
       setDeleting(null);
       void queryClient.invalidateQueries({ queryKey: [kind] });
     },
@@ -178,13 +189,21 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
               setFormOpen(true);
             }}
           >
-            Add
+            {t('hr.common.add')}
           </Button>
         </Stack>
 
         {items.isLoading && <CircularProgress size={24} />}
         {items.isError && <Alert severity="error">{getErrorMessage(items.error)}</Alert>}
-        {items.data?.length === 0 && <EmptyState title={`No ${title.toLowerCase()} yet`} />}
+        {items.data?.length === 0 && (
+          <EmptyState
+            title={t(
+              kind === 'departments'
+                ? 'hr.organization.emptyDepartments'
+                : 'hr.organization.emptyPositions',
+            )}
+          />
+        )}
         <List disablePadding>
           {items.data?.map((item) => {
             const inUse = item.employeeCount > 0;
@@ -197,7 +216,7 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
                   <Stack direction="row" spacing={0.5}>
                     <IconButton
                       size="small"
-                      aria-label={`Edit ${item.name}`}
+                      aria-label={t('hr.organization.editItem', { name: item.name })}
                       onClick={() => {
                         setEditing(item);
                         setFormOpen(true);
@@ -208,15 +227,15 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
                     <Tooltip
                       title={
                         inUse
-                          ? `Cannot delete: ${item.employeeCount} employee(s) assigned`
-                          : `Delete ${item.name}`
+                          ? t('hr.organization.cannotDelete', { count: item.employeeCount })
+                          : t('hr.organization.deleteItem', { name: item.name })
                       }
                     >
                       <span>
                         <IconButton
                           size="small"
                           color="error"
-                          aria-label={`Delete ${item.name}`}
+                          aria-label={t('hr.organization.deleteItem', { name: item.name })}
                           disabled={inUse}
                           onClick={() => setDeleting(item)}
                         >
@@ -229,7 +248,7 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
               >
                 <ListItemText
                   primary={item.name}
-                  secondary={`${item.employeeCount} employee${item.employeeCount === 1 ? '' : 's'}${
+                  secondary={`${t('hr.organization.employeeCount', { count: item.employeeCount })}${
                     item.description ? ` · ${item.description}` : ''
                   }`}
                   sx={{ pr: 10 }}
@@ -242,7 +261,6 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
 
       <ItemFormDialog
         kind={kind}
-        singular={singular}
         open={formOpen}
         item={editing}
         onClose={() => setFormOpen(false)}
@@ -250,9 +268,9 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
 
       <ConfirmDialog
         open={deleting !== null}
-        title={`Delete ${singular.toLowerCase()}`}
-        message={deleting ? `${deleting.name} will be permanently removed.` : ''}
-        confirmLabel="Delete"
+        title={t(`hr.organization.${singularKey(kind)}.delete`)}
+        message={deleting ? t('hr.organization.permanentlyRemoved', { name: deleting.name }) : ''}
+        confirmLabel={t('hr.common.delete')}
         danger
         loading={deleteMutation.isPending}
         onConfirm={() => deleting && deleteMutation.mutate(deleting)}
@@ -263,15 +281,19 @@ function OrganizationCard({ kind, title, singular }: OrganizationCardProps) {
 }
 
 export function OrganizationPage() {
+  const { t } = useTranslation();
   return (
     <Box>
-      <PageHeader title="Organization" description="Manage departments and positions." />
+      <PageHeader
+        title={t('hr.organization.title')}
+        description={t('hr.organization.description')}
+      />
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <OrganizationCard kind="departments" title="Departments" singular="Department" />
+          <OrganizationCard kind="departments" title={t('hr.organization.departments')} />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <OrganizationCard kind="positions" title="Positions" singular="Position" />
+          <OrganizationCard kind="positions" title={t('hr.organization.positions')} />
         </Grid>
       </Grid>
     </Box>

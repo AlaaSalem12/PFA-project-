@@ -21,6 +21,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewKanbanIcon from '@mui/icons-material/ViewKanban';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { getErrorMessage } from '../../api/errors';
 import { listMachines } from '../../api/machines.api';
@@ -59,6 +60,7 @@ interface BoardCardProps {
 }
 
 function BoardCard({ order, canMove, moving, onMove }: BoardCardProps) {
+  const { t } = useTranslation();
   const targets = WORK_ORDER_TRANSITIONS[order.status];
   return (
     <Card variant="outlined">
@@ -103,7 +105,7 @@ function BoardCard({ order, canMove, moving, onMove }: BoardCardProps) {
                 disabled={moving}
                 onClick={() => onMove(order, target)}
               >
-                Move to {formatEnum(target)}
+                {t('workOrders.list.moveTo', { status: formatEnum(target) })}
               </Button>
             ))}
           </Stack>
@@ -122,6 +124,7 @@ interface BoardColumnProps {
 }
 
 function BoardColumn({ status, params, canMove, moving, onMove }: BoardColumnProps) {
+  const { t } = useTranslation();
   const orders = useQuery({
     queryKey: ['work-orders', 'board', status, params],
     queryFn: () => listWorkOrders({ ...params, status, page: 0, size: 20, sort: 'openedAt,desc' }),
@@ -159,7 +162,7 @@ function BoardColumn({ status, params, canMove, moving, onMove }: BoardColumnPro
         ))}
         {orders.data?.content.length === 0 && (
           <Typography variant="body2" color="text.secondary">
-            No work orders.
+            {t('workOrders.list.boardEmpty')}
           </Typography>
         )}
       </Stack>
@@ -168,6 +171,7 @@ function BoardColumn({ status, params, canMove, moving, onMove }: BoardColumnPro
 }
 
 export function WorkOrdersPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.user?.role);
@@ -217,7 +221,7 @@ export function WorkOrdersPage() {
     mutationFn: ({ order, status }: { order: WorkOrder; status: WorkOrderStatus }) =>
       updateWorkOrderStatus(order.id, { status }),
     onSuccess: () => {
-      toast.success('Status updated');
+      toast.success(t('workOrders.list.statusUpdated'));
       void queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       void queryClient.invalidateQueries({ queryKey: ['machine-work-orders'] });
       void queryClient.invalidateQueries({ queryKey: ['employee-work-orders'] });
@@ -235,7 +239,7 @@ export function WorkOrdersPage() {
       { field: 'id', headerName: '#', width: 80 },
       {
         field: 'machine',
-        headerName: 'Machine',
+        headerName: t('workOrders.columns.machine'),
         flex: 1.3,
         minWidth: 200,
         sortable: false,
@@ -243,28 +247,28 @@ export function WorkOrdersPage() {
       },
       {
         field: 'type',
-        headerName: 'Type',
+        headerName: t('workOrders.columns.type'),
         flex: 0.8,
         minWidth: 120,
         valueFormatter: (value: string) => formatEnum(value),
       },
       {
         field: 'priority',
-        headerName: 'Priority',
+        headerName: t('workOrders.columns.priority'),
         flex: 0.8,
         minWidth: 120,
         renderCell: ({ row }) => <PriorityChip priority={row.priority} />,
       },
       {
         field: 'status',
-        headerName: 'Status',
+        headerName: t('workOrders.columns.status'),
         flex: 0.9,
         minWidth: 130,
         renderCell: ({ row }) => <WorkOrderStatusChip status={row.status} />,
       },
       {
         field: 'assignedTo',
-        headerName: 'Assignee',
+        headerName: t('workOrders.columns.assignee'),
         flex: 1,
         minWidth: 150,
         sortable: false,
@@ -272,13 +276,13 @@ export function WorkOrdersPage() {
       },
       {
         field: 'openedAt',
-        headerName: 'Opened',
+        headerName: t('workOrders.columns.opened'),
         flex: 0.8,
         minWidth: 120,
         valueFormatter: (value: string) => formatDate(value),
       },
     ],
-    [],
+    [t],
   );
 
   const hasFilters = Boolean(
@@ -288,12 +292,12 @@ export function WorkOrdersPage() {
   return (
     <Box sx={{ maxWidth: 1440, mx: 'auto', width: '100%' }}>
       <PageHeader
-        title="Work orders"
-        description="Track corrective and preventive maintenance work."
+        title={t('workOrders.list.title')}
+        description={t('workOrders.list.description')}
         action={
           canWrite && (
             <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-              Create work order
+              {t('workOrders.list.create')}
             </Button>
           )
         }
@@ -305,21 +309,21 @@ export function WorkOrdersPage() {
           onChange={(_, next: number) => setMine(next === 1)}
           sx={{ mb: 2 }}
         >
-          <Tab label="All" />
-          <Tab label="Assigned to me" />
+          <Tab label={t('workOrders.list.tabAll')} />
+          <Tab label={t('workOrders.list.tabMine')} />
         </Tabs>
       )}
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} mb={3} alignItems="center">
         <TextField
           select
-          label="Status"
+          label={t('workOrders.list.status')}
           value={filters.status ?? ''}
           onChange={(event) => setFilter('status', event.target.value)}
           sx={{ minWidth: 160 }}
           disabled={view === 'board'}
         >
-          <MenuItem value="">All statuses</MenuItem>
+          <MenuItem value="">{t('workOrders.list.allStatuses')}</MenuItem>
           {WORK_ORDER_STATUSES.map((value) => (
             <MenuItem key={value} value={value}>
               {formatEnum(value)}
@@ -328,12 +332,12 @@ export function WorkOrdersPage() {
         </TextField>
         <TextField
           select
-          label="Priority"
+          label={t('workOrders.list.priority')}
           value={filters.priority ?? ''}
           onChange={(event) => setFilter('priority', event.target.value)}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="">All priorities</MenuItem>
+          <MenuItem value="">{t('workOrders.list.allPriorities')}</MenuItem>
           {WORK_ORDER_PRIORITIES.map((value) => (
             <MenuItem key={value} value={value}>
               {formatEnum(value)}
@@ -342,12 +346,12 @@ export function WorkOrdersPage() {
         </TextField>
         <TextField
           select
-          label="Type"
+          label={t('workOrders.list.type')}
           value={filters.type ?? ''}
           onChange={(event) => setFilter('type', event.target.value)}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="">All types</MenuItem>
+          <MenuItem value="">{t('workOrders.list.allTypes')}</MenuItem>
           {WORK_ORDER_TYPES.map((value) => (
             <MenuItem key={value} value={value}>
               {formatEnum(value)}
@@ -369,7 +373,7 @@ export function WorkOrdersPage() {
             setMachine(value);
             setFilter('machineId', value ? value.id : null);
           }}
-          renderInput={(params) => <TextField {...params} label="Machine" />}
+          renderInput={(params) => <TextField {...params} label={t('workOrders.list.machine')} />}
         />
         <ToggleButtonGroup
           exclusive
@@ -377,10 +381,10 @@ export function WorkOrdersPage() {
           value={view}
           onChange={(_, next: ViewMode | null) => next && setView(next)}
         >
-          <ToggleButton value="table" aria-label="Table view">
+          <ToggleButton value="table" aria-label={t('workOrders.list.tableView')}>
             <ViewListIcon />
           </ToggleButton>
-          <ToggleButton value="board" aria-label="Board view">
+          <ToggleButton value="board" aria-label={t('workOrders.list.boardView')}>
             <ViewKanbanIcon />
           </ToggleButton>
         </ToggleButtonGroup>
@@ -401,11 +405,9 @@ export function WorkOrdersPage() {
             onRowClick={(row) => navigate(`/work-orders/${row.id}`)}
             emptyState={
               <EmptyState
-                title="No work orders found"
+                title={t('workOrders.list.emptyTitle')}
                 text={
-                  hasFilters
-                    ? 'No work order matches the selected filters.'
-                    : 'Nothing to show yet.'
+                  hasFilters ? t('workOrders.list.emptyFiltered') : t('workOrders.list.emptyNone')
                 }
               />
             }

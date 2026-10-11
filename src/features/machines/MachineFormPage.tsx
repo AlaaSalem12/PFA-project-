@@ -15,8 +15,10 @@ import {
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
+import type { TFunction } from 'i18next';
 import { assetUrl } from '../../api/client';
 import { applyFieldErrors, getErrorMessage } from '../../api/errors';
 import {
@@ -36,36 +38,67 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 /** Optional numeric input kept as a string in the form. */
-const optionalNumber = (label: string, integer = false) =>
+const optionalNumber = (t: TFunction, label: string, integer = false) =>
   z
     .string()
     .trim()
     .refine((value) => value === '' || (!Number.isNaN(Number(value)) && Number(value) >= 0), {
-      message: `${label} must be a positive number`,
+      message: t('machines.form.validation.positiveNumber', { label }),
     })
     .refine((value) => !integer || value === '' || Number.isInteger(Number(value)), {
-      message: `${label} must be a whole number`,
+      message: t('machines.form.validation.wholeNumber', { label }),
     });
 
-const machineSchema = z.object({
-  code: z.string().trim().min(2, 'Code is required').max(50, 'Code is too long'),
-  name: z.string().trim().min(2, 'Name is required').max(150, 'Name is too long'),
-  type: z.enum(MACHINE_TYPES as [string, ...string[]], { message: 'Type is required' }),
-  brand: z.string().trim().max(100, 'Brand is too long'),
-  model: z.string().trim().max(100, 'Model is too long'),
-  serialNumber: z.string().trim().max(100, 'Serial number is too long'),
-  workshop: z.string().trim().max(100, 'Workshop is too long'),
-  location: z.string().trim().max(150, 'Location is too long'),
-  purchaseDate: z.string(),
-  hourlyCost: optionalNumber('Hourly cost'),
-  operatingHours: optionalNumber('Operating hours'),
-  maintenanceIntervalDays: optionalNumber('Interval', true),
-  lastMaintenanceAt: z.string(),
-  nextMaintenanceDueAt: z.string(),
-  notes: z.string().trim().max(2000, 'Notes are too long'),
-});
+const buildMachineSchema = (t: TFunction) => {
+  const tooLong = (label: string) => t('machines.form.validation.tooLong', { label });
+  return z.object({
+    code: z
+      .string()
+      .trim()
+      .min(2, t('machines.form.validation.required', { label: t('machines.fields.code') }))
+      .max(50, tooLong(t('machines.fields.code'))),
+    name: z
+      .string()
+      .trim()
+      .min(2, t('machines.form.validation.required', { label: t('machines.fields.name') }))
+      .max(150, tooLong(t('machines.fields.name'))),
+    type: z.enum(MACHINE_TYPES as [string, ...string[]], {
+      message: t('machines.form.validation.required', { label: t('machines.fields.type') }),
+    }),
+    brand: z
+      .string()
+      .trim()
+      .max(100, tooLong(t('machines.fields.brand'))),
+    model: z
+      .string()
+      .trim()
+      .max(100, tooLong(t('machines.fields.model'))),
+    serialNumber: z
+      .string()
+      .trim()
+      .max(100, tooLong(t('machines.fields.serialNumber'))),
+    workshop: z
+      .string()
+      .trim()
+      .max(100, tooLong(t('machines.fields.workshop'))),
+    location: z
+      .string()
+      .trim()
+      .max(150, tooLong(t('machines.fields.location'))),
+    purchaseDate: z.string(),
+    hourlyCost: optionalNumber(t, t('machines.fields.hourlyCost')),
+    operatingHours: optionalNumber(t, t('machines.fields.operatingHours')),
+    maintenanceIntervalDays: optionalNumber(t, t('machines.fields.interval'), true),
+    lastMaintenanceAt: z.string(),
+    nextMaintenanceDueAt: z.string(),
+    notes: z
+      .string()
+      .trim()
+      .max(2000, tooLong(t('machines.fields.notes'))),
+  });
+};
 
-type MachineFormValues = z.infer<typeof machineSchema>;
+type MachineFormValues = z.infer<ReturnType<typeof buildMachineSchema>>;
 
 const EMPTY_VALUES: MachineFormValues = {
   code: '',
@@ -161,6 +194,8 @@ function Section({
 }
 
 export function MachineFormPage() {
+  const { t } = useTranslation();
+  const machineSchema = useMemo(() => buildMachineSchema(t), [t]);
   const { id } = useParams();
   const machineId = id ? Number(id) : null;
   const editing = machineId !== null;
@@ -169,7 +204,7 @@ export function MachineFormPage() {
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [imageError, setImageError] = useState('');
+  const [imageError, setImageError] = useState<'type' | 'size' | ''>('');
   const pendingPreview = useMemo(
     () => (pendingFile ? URL.createObjectURL(pendingFile) : null),
     [pendingFile],
@@ -212,11 +247,11 @@ export function MachineFormPage() {
     mutationFn: ({ target, file }: { target: number; file: File }) =>
       uploadMachineImage(target, file),
     onSuccess: (saved) => {
-      toast.success('Image updated');
+      toast.success(t('machines.form.imageUpdated'));
       setPendingFile(null);
       afterSave(saved);
     },
-    onError: (error) => toast.error(getErrorMessage(error, 'Image could not be uploaded.')),
+    onError: (error) => toast.error(getErrorMessage(error, t('machines.form.imageUploadFailed'))),
   });
 
   const saveMutation = useMutation({
@@ -237,13 +272,13 @@ export function MachineFormPage() {
     },
     onSuccess: ({ saved, imageFailed }) => {
       afterSave(saved);
-      toast.success(editing ? 'Machine updated' : 'Machine created');
-      if (imageFailed) toast.warning('Machine saved, but the image could not be uploaded.');
+      toast.success(editing ? t('machines.form.updated') : t('machines.form.created'));
+      if (imageFailed) toast.warning(t('machines.form.savedImageFailed'));
       navigate(`/machines/${saved.id}`);
     },
     onError: (error) => {
       if (!applyFieldErrors<MachineFormValues>(error, setError)) {
-        toast.error(getErrorMessage(error, 'Machine could not be saved.'));
+        toast.error(getErrorMessage(error, t('machines.form.saveFailed')));
       }
     },
   });
@@ -253,11 +288,11 @@ export function MachineFormPage() {
     event.target.value = '';
     if (!file) return;
     if (!IMAGE_TYPES.includes(file.type)) {
-      setImageError('Use a JPEG, PNG or WebP image.');
+      setImageError('type');
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      setImageError('The image must be 5 MB or smaller.');
+      setImageError('size');
       return;
     }
     setImageError('');
@@ -272,7 +307,7 @@ export function MachineFormPage() {
   if (editing && (!Number.isFinite(machineId) || machine.isError)) {
     return (
       <Alert severity="error">
-        {machine.isError ? getErrorMessage(machine.error) : 'Invalid machine.'}
+        {machine.isError ? getErrorMessage(machine.error) : t('machines.form.invalid')}
       </Alert>
     );
   }
@@ -290,20 +325,20 @@ export function MachineFormPage() {
   return (
     <Box sx={{ maxWidth: 960, mx: 'auto', width: '100%' }}>
       <PageHeader
-        title={editing ? 'Edit machine' : 'Add machine'}
-        description={editing ? machine.data?.code : 'Register a new machine in the asset catalog.'}
+        title={editing ? t('machines.form.editTitle') : t('machines.form.addTitle')}
+        description={editing ? machine.data?.code : t('machines.form.addDescription')}
       />
       <Box
         component="form"
         noValidate
         onSubmit={handleSubmit((values) => saveMutation.mutate(values))}
       >
-        <Section title="Identity">
+        <Section title={t('machines.form.sections.identity')}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               required
-              label="Code"
+              label={t('machines.fields.code')}
               {...register('code')}
               error={!!errors.code}
               helperText={errors.code?.message}
@@ -313,7 +348,7 @@ export function MachineFormPage() {
             <TextField
               fullWidth
               required
-              label="Name"
+              label={t('machines.fields.name')}
               {...register('name')}
               error={!!errors.name}
               helperText={errors.name?.message}
@@ -328,7 +363,7 @@ export function MachineFormPage() {
                   select
                   fullWidth
                   required
-                  label="Type"
+                  label={t('machines.fields.type')}
                   {...field}
                   error={!!errors.type}
                   helperText={errors.type?.message}
@@ -345,7 +380,7 @@ export function MachineFormPage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
-              label="Brand"
+              label={t('machines.fields.brand')}
               {...register('brand')}
               error={!!errors.brand}
               helperText={errors.brand?.message}
@@ -354,7 +389,7 @@ export function MachineFormPage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
-              label="Model"
+              label={t('machines.fields.model')}
               {...register('model')}
               error={!!errors.model}
               helperText={errors.model?.message}
@@ -363,7 +398,7 @@ export function MachineFormPage() {
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
-              label="Serial number"
+              label={t('machines.fields.serialNumber')}
               {...register('serialNumber')}
               error={!!errors.serialNumber}
               helperText={errors.serialNumber?.message}
@@ -371,11 +406,11 @@ export function MachineFormPage() {
           </Grid>
         </Section>
 
-        <Section title="Location">
+        <Section title={t('machines.form.sections.location')}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Workshop"
+              label={t('machines.fields.workshop')}
               {...register('workshop')}
               error={!!errors.workshop}
               helperText={errors.workshop?.message}
@@ -384,7 +419,7 @@ export function MachineFormPage() {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Location"
+              label={t('machines.fields.location')}
               {...register('location')}
               error={!!errors.location}
               helperText={errors.location?.message}
@@ -392,12 +427,12 @@ export function MachineFormPage() {
           </Grid>
         </Section>
 
-        <Section title="Finance and usage">
+        <Section title={t('machines.form.sections.finance')}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
               type="date"
-              label="Purchase date"
+              label={t('machines.fields.purchaseDate')}
               slotProps={{ inputLabel: { shrink: true } }}
               {...register('purchaseDate')}
               error={!!errors.purchaseDate}
@@ -407,7 +442,7 @@ export function MachineFormPage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
-              label="Hourly cost (TND)"
+              label={t('machines.form.hourlyCostTnd')}
               slotProps={{ htmlInput: { inputMode: 'decimal' } }}
               {...register('hourlyCost')}
               error={!!errors.hourlyCost}
@@ -417,7 +452,7 @@ export function MachineFormPage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
-              label="Operating hours"
+              label={t('machines.fields.operatingHours')}
               slotProps={{ htmlInput: { inputMode: 'decimal' } }}
               {...register('operatingHours')}
               error={!!errors.operatingHours}
@@ -426,11 +461,11 @@ export function MachineFormPage() {
           </Grid>
         </Section>
 
-        <Section title="Maintenance">
+        <Section title={t('machines.form.sections.maintenance')}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               fullWidth
-              label="Interval (days)"
+              label={t('machines.form.intervalDays')}
               slotProps={{ htmlInput: { inputMode: 'numeric' } }}
               {...register('maintenanceIntervalDays')}
               error={!!errors.maintenanceIntervalDays}
@@ -441,7 +476,7 @@ export function MachineFormPage() {
             <TextField
               fullWidth
               type="date"
-              label="Last maintenance"
+              label={t('machines.fields.lastMaintenance')}
               slotProps={{ inputLabel: { shrink: true } }}
               {...register('lastMaintenanceAt')}
               error={!!errors.lastMaintenanceAt}
@@ -452,7 +487,7 @@ export function MachineFormPage() {
             <TextField
               fullWidth
               type="date"
-              label="Next maintenance due"
+              label={t('machines.form.nextMaintenanceDue')}
               slotProps={{ inputLabel: { shrink: true } }}
               {...register('nextMaintenanceDueAt')}
               error={!!errors.nextMaintenanceDueAt}
@@ -461,13 +496,13 @@ export function MachineFormPage() {
           </Grid>
         </Section>
 
-        <Section title="Notes">
+        <Section title={t('machines.form.sections.notes')}>
           <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               multiline
               minRows={3}
-              label="Notes"
+              label={t('machines.fields.notes')}
               {...register('notes')}
               error={!!errors.notes}
               helperText={errors.notes?.message}
@@ -476,11 +511,9 @@ export function MachineFormPage() {
         </Section>
 
         <Section
-          title="Image"
+          title={t('machines.form.sections.image')}
           description={
-            editing
-              ? 'The image is uploaded as soon as you pick a file.'
-              : 'The image is uploaded after the machine is created.'
+            editing ? t('machines.form.imageHintEdit') : t('machines.form.imageHintCreate')
           }
         >
           <Grid size={{ xs: 12 }}>
@@ -501,12 +534,12 @@ export function MachineFormPage() {
                   <Box
                     component="img"
                     src={previewSrc}
-                    alt="Machine preview"
+                    alt={t('machines.form.previewAlt')}
                     sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    No image
+                    {t('machines.form.noImage')}
                   </Typography>
                 )}
               </Box>
@@ -523,14 +556,16 @@ export function MachineFormPage() {
                   onClick={() => fileInput.current?.click()}
                   disabled={imageMutation.isPending}
                 >
-                  {imageMutation.isPending ? 'Uploading...' : 'Choose image'}
+                  {imageMutation.isPending
+                    ? t('machines.form.uploading')
+                    : t('machines.form.chooseImage')}
                 </Button>
                 <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                  JPEG, PNG or WebP, 5 MB maximum.
+                  {t('machines.form.imageFormats')}
                 </Typography>
                 {imageError && (
                   <Typography variant="caption" color="error" display="block">
-                    {imageError}
+                    {t(`machines.form.imageError.${imageError}`)}
                   </Typography>
                 )}
               </Box>
@@ -540,10 +575,14 @@ export function MachineFormPage() {
 
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Button component={Link} to={cancelPath} disabled={saveMutation.isPending}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="contained" disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? 'Saving...' : editing ? 'Save changes' : 'Create machine'}
+            {saveMutation.isPending
+              ? t('machines.form.saving')
+              : editing
+                ? t('machines.form.saveChanges')
+                : t('machines.form.create')}
           </Button>
         </Stack>
       </Box>

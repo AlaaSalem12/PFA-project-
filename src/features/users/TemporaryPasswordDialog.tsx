@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { useTranslation } from 'react-i18next';
 import { toast } from '../../store/toastStore';
 
 export interface TemporaryPasswordDialogProps {
@@ -25,25 +26,26 @@ export function TemporaryPasswordDialog({
   username,
   onClose,
 }: TemporaryPasswordDialogProps) {
+  const { t } = useTranslation();
   const handleCopy = async () => {
     if (!password) return;
     try {
       await navigator.clipboard.writeText(password);
-      toast.success('Password copied');
+      toast.success(t('users.tempPassword.copied'));
     } catch {
-      toast.error('Could not copy. Select the password and copy it manually.');
+      toast.error(t('users.tempPassword.copyFailed'));
     }
   };
 
   return (
     <Dialog open={password !== null} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Temporary password</DialogTitle>
+      <DialogTitle>{t('users.tempPassword.title')}</DialogTitle>
       <DialogContent>
         <DialogContentText>
           {username
-            ? `Share this password with ${username}.`
-            : 'Share this password with the user.'}{' '}
-          They must change it at first sign-in.
+            ? t('users.tempPassword.shareWith', { username })
+            : t('users.tempPassword.shareGeneric')}{' '}
+          {t('users.tempPassword.mustChange')}
         </DialogContentText>
         <Box
           sx={{
@@ -63,19 +65,19 @@ export function TemporaryPasswordDialog({
           <Typography sx={{ fontFamily: 'monospace', fontSize: 18, wordBreak: 'break-all' }}>
             {password}
           </Typography>
-          <Tooltip title="Copy password">
-            <IconButton aria-label="Copy password" onClick={handleCopy}>
+          <Tooltip title={t('users.tempPassword.copy')}>
+            <IconButton aria-label={t('users.tempPassword.copy')} onClick={handleCopy}>
               <ContentCopyIcon />
             </IconButton>
           </Tooltip>
         </Box>
         <Alert severity="warning" sx={{ mt: 2 }}>
-          It will not be shown again.
+          {t('users.tempPassword.notShown')}
         </Alert>
       </DialogContent>
       <DialogActions>
         <Button variant="contained" onClick={onClose}>
-          Done
+          {t('users.tempPassword.done')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -22,6 +22,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewIcon from '@mui/icons-material/GridView';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { getErrorMessage } from '../../api/errors';
@@ -105,6 +106,7 @@ function MachineCard({ machine }: { machine: Machine }) {
 }
 
 export function MachineCatalogPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isAdmin = useAuthStore((state) => state.user?.role === 'ADMIN');
   const urlState = useUrlState({ defaultSize: 12, defaultSort: 'id,desc' });
@@ -146,7 +148,7 @@ export function MachineCatalogPage() {
     () => [
       {
         field: 'name',
-        headerName: 'Machine',
+        headerName: t('machines.catalog.columns.machine'),
         flex: 1.4,
         minWidth: 220,
         sortable: false,
@@ -163,7 +165,7 @@ export function MachineCatalogPage() {
       },
       {
         field: 'type',
-        headerName: 'Type',
+        headerName: t('machines.catalog.columns.type'),
         flex: 1,
         minWidth: 140,
         sortable: false,
@@ -171,7 +173,7 @@ export function MachineCatalogPage() {
       },
       {
         field: 'location',
-        headerName: 'Location',
+        headerName: t('machines.catalog.columns.location'),
         flex: 1,
         minWidth: 140,
         sortable: false,
@@ -179,7 +181,7 @@ export function MachineCatalogPage() {
       },
       {
         field: 'maintenanceStatus',
-        headerName: 'Status',
+        headerName: t('machines.catalog.columns.status'),
         flex: 1,
         minWidth: 210,
         sortable: false,
@@ -187,14 +189,14 @@ export function MachineCatalogPage() {
       },
       {
         field: 'nextMaintenanceDueAt',
-        headerName: 'Next maintenance',
+        headerName: t('machines.catalog.columns.nextMaintenance'),
         flex: 1,
         minWidth: 150,
         sortable: false,
         valueFormatter: (value: string | null) => formatDate(value),
       },
     ],
-    [],
+    [t],
   );
 
   const rows = machines.data?.content ?? [];
@@ -202,24 +204,22 @@ export function MachineCatalogPage() {
 
   const emptyState = (
     <EmptyState
-      title="No machines found"
-      text={hasFilters ? 'No machine matches the selected filters.' : 'No machines registered yet.'}
+      title={t('machines.catalog.emptyTitle')}
+      text={hasFilters ? t('machines.catalog.emptyFiltered') : t('machines.catalog.emptyNone')}
     />
   );
 
   return (
     <Box sx={{ maxWidth: 1440, mx: 'auto', width: '100%' }}>
       <PageHeader
-        title="Machines"
+        title={t('machines.catalog.title')}
         description={
-          isAdmin
-            ? 'Keep your asset register accurate and actionable.'
-            : 'Browse equipment and current maintenance status.'
+          isAdmin ? t('machines.catalog.descriptionAdmin') : t('machines.catalog.descriptionUser')
         }
         action={
           isAdmin && (
             <Button component={Link} to="/machines/new" startIcon={<AddIcon />} variant="contained">
-              Add machine
+              {t('machines.catalog.add')}
             </Button>
           )
         }
@@ -227,7 +227,7 @@ export function MachineCatalogPage() {
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} mb={3}>
         <TextField
           fullWidth
-          placeholder="Search by code, name or serial number"
+          placeholder={t('machines.catalog.searchPlaceholder')}
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
           slotProps={{
@@ -242,12 +242,12 @@ export function MachineCatalogPage() {
         />
         <TextField
           select
-          label="Status"
+          label={t('machines.catalog.filters.status')}
           value={filters.status ?? ''}
           onChange={(event) => setFilter('status', event.target.value)}
           sx={{ minWidth: 200 }}
         >
-          <MenuItem value="">All statuses</MenuItem>
+          <MenuItem value="">{t('machines.catalog.filters.allStatuses')}</MenuItem>
           {MACHINE_STATUSES.map((value) => (
             <MenuItem key={value} value={value}>
               {formatEnum(value)}
@@ -256,12 +256,12 @@ export function MachineCatalogPage() {
         </TextField>
         <TextField
           select
-          label="Type"
+          label={t('machines.catalog.filters.type')}
           value={filters.type ?? ''}
           onChange={(event) => setFilter('type', event.target.value)}
           sx={{ minWidth: 170 }}
         >
-          <MenuItem value="">All types</MenuItem>
+          <MenuItem value="">{t('machines.catalog.filters.allTypes')}</MenuItem>
           {MACHINE_TYPES.map((value) => (
             <MenuItem key={value} value={value}>
               {formatEnum(value)}
@@ -269,16 +269,16 @@ export function MachineCatalogPage() {
           ))}
         </TextField>
         <TextField
-          label="Location"
+          label={t('machines.catalog.filters.location')}
           value={locationText}
           onChange={(event) => setLocationText(event.target.value)}
           sx={{ minWidth: 170 }}
         />
         <ToggleButtonGroup exclusive size="small" value={view} onChange={changeView}>
-          <ToggleButton value="cards" aria-label="Card view">
+          <ToggleButton value="cards" aria-label={t('machines.catalog.cardView')}>
             <GridViewIcon />
           </ToggleButton>
-          <ToggleButton value="table" aria-label="Table view">
+          <ToggleButton value="table" aria-label={t('machines.catalog.tableView')}>
             <ViewListIcon />
           </ToggleButton>
         </ToggleButtonGroup>

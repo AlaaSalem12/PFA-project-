@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   DataGrid,
   type GridColDef,
@@ -7,6 +8,7 @@ import {
   type GridSortModel,
   type GridValidRowModel,
 } from '@mui/x-data-grid';
+import { frFR } from '@mui/x-data-grid/locales';
 import type { ReactNode } from 'react';
 
 export interface DataTableProps<R extends GridValidRowModel> {
@@ -38,6 +40,9 @@ export function DataTable<R extends GridValidRowModel>({
   pageSizeOptions = [10, 20, 50, 100],
   emptyState,
 }: DataTableProps<R>) {
+  const { i18n } = useTranslation();
+  const localeText =
+    i18n.language === 'fr' ? frFR.components.MuiDataGrid.defaultProps.localeText : undefined;
   return (
     <Box sx={{ width: '100%', bgcolor: 'background.paper', borderRadius: 1 }}>
       <DataGrid<R>
@@ -53,6 +58,7 @@ export function DataTable<R extends GridValidRowModel>({
         sortModel={sortModel}
         onSortModelChange={onSortModelChange}
         pageSizeOptions={pageSizeOptions}
+        localeText={localeText}
         onRowClick={onRowClick ? (params: GridRowParams<R>) => onRowClick(params.row) : undefined}
         disableRowSelectionOnClick
         disableColumnFilter

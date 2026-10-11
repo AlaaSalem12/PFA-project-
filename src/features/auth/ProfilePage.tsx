@@ -9,6 +9,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { getCurrentUser } from '../../api/auth.api';
 import { getErrorMessage } from '../../api/errors';
@@ -16,6 +17,7 @@ import { useAuthStore } from '../../store/authStore';
 import { formatDateTime, formatEnum } from '../../utils/format';
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const role = useAuthStore((state) => state.user?.role);
   const {
     data: user,
@@ -29,26 +31,26 @@ export function ProfilePage() {
   const employee = user?.employee;
   const employeeLabel = employee
     ? `${employee.firstName} ${employee.lastName} (${employee.matricule})`
-    : 'Not linked';
+    : t('profile.notLinked');
 
   const fields: Array<[string, string]> = [
-    ['Full name', user?.fullName ?? '—'],
-    ['Username', user?.username ?? '—'],
-    ['Email', user?.email ?? '—'],
-    ['Role', formatEnum(user?.role)],
-    ['Last login', formatDateTime(user?.lastLoginAt)],
+    [t('profile.fields.fullName'), user?.fullName ?? '—'],
+    [t('profile.fields.username'), user?.username ?? '—'],
+    [t('profile.fields.email'), user?.email ?? '—'],
+    [t('profile.fields.role'), formatEnum(user?.role)],
+    [t('profile.fields.lastLogin'), formatDateTime(user?.lastLoginAt)],
   ];
 
   return (
     <Box maxWidth={900} mx="auto">
       <Typography color="primary.main" fontSize={10} fontWeight={800} letterSpacing={3}>
-        ACCOUNT SETTINGS
+        {t('profile.eyebrow').toUpperCase()}
       </Typography>
       <Typography variant="h4" mt={1}>
-        My profile
+        {t('profile.title')}
       </Typography>
       <Typography color="text.secondary" mt={1} mb={3}>
-        Review your identity and workspace access.
+        {t('profile.subtitle')}
       </Typography>
       {isLoading && <CircularProgress />}
       {error && <Alert severity="error">{getErrorMessage(error)}</Alert>}
@@ -97,7 +99,7 @@ export function ProfilePage() {
               ))}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" color="text.secondary">
-                  Linked employee
+                  {t('profile.fields.employee')}
                 </Typography>
                 <Box>
                   {employee && canOpenEmployee ? (
@@ -116,7 +118,7 @@ export function ProfilePage() {
               </Grid>
             </Grid>
             <Button component={Link} to="/change-password" sx={{ mt: 3 }}>
-              Change password →
+              {t('profile.changePassword')}
             </Button>
           </CardContent>
         </Card>

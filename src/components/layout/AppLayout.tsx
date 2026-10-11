@@ -19,9 +19,11 @@ import {
   Typography,
   useColorScheme,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AssistantWidget } from '../../features/assistant/AssistantWidget';
+import { BackButton } from '../BackButton';
 import { NotificationBell } from '../NotificationBell';
 import { formatEnum } from '../../utils/format';
 import { useAuthStore } from '../../store/authStore';
@@ -33,7 +35,9 @@ const rail = 72;
 export function AppLayout() {
   const { t, i18n } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isMobile = useMediaQuery('(max-width:1023px)');
+  const theme = useTheme();
+  // Same breakpoint as the permanent drawer (`md`), so exactly one of the two drawers is ever active.
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout } = useAuthStore();
   const { sidebarOpen, toggleSidebar } = useUiStore();
   const { mode, systemMode, setMode } = useColorScheme();
@@ -111,6 +115,8 @@ export function AppLayout() {
                             minHeight: 44,
                             borderRadius: 1.5,
                             mb: 0.5,
+                            position: 'relative',
+                            justifyContent: sidebarOpen || isMobile ? 'flex-start' : 'center',
                             color: 'text.secondary',
                             '&.Mui-selected': {
                               bgcolor: 'brand.soft',
@@ -119,6 +125,8 @@ export function AppLayout() {
                                 content: '""',
                                 position: 'absolute',
                                 right: 10,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
                                 height: 5,
                                 width: 5,
                                 bgcolor: 'primary.main',
@@ -229,7 +237,7 @@ export function AppLayout() {
       </Box>
       <Drawer
         variant="temporary"
-        open={mobileOpen}
+        open={mobileOpen && isMobile}
         onClose={() => setMobileOpen(false)}
         sx={{ '& .MuiDrawer-paper': { width: expanded } }}
       >
@@ -313,6 +321,7 @@ export function AppLayout() {
             boxSizing: 'border-box',
           }}
         >
+          <BackButton />
           <Outlet key={i18n.language} />
         </Box>
       </Box>

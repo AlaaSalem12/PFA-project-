@@ -1,0 +1,133 @@
+{
+  "users": {
+    "title": "Utilisateurs",
+    "description": "Gérez les comptes, les rôles et les accès de l'espace de travail.",
+    "new": "Nouvel utilisateur",
+    "searchPlaceholder": "Rechercher par nom, e-mail ou identifiant",
+    "filterRole": "Rôle",
+    "filterStatus": "Statut",
+    "allRoles": "Tous les rôles",
+    "allStatuses": "Tous",
+    "enabled": "Activés",
+    "disabled": "Désactivés",
+    "never": "Jamais",
+    "columns": {
+      "name": "Nom",
+      "username": "Identifiant",
+      "role": "Rôle",
+      "status": "Statut",
+      "lastLogin": "Dernière connexion",
+      "employee": "Employé lié"
+    },
+    "status": {
+      "active": "Actif",
+      "disabled": "Désactivé",
+      "lockedUntil": "Verrouillé jusqu'au {{date}}"
+    },
+    "actions": {
+      "label": "Actions pour {{name}}",
+      "edit": "Modifier",
+      "disable": "Désactiver",
+      "enable": "Activer",
+      "reset": "Réinitialiser le mot de passe",
+      "unlock": "Déverrouiller",
+      "delete": "Supprimer"
+    },
+    "confirm": {
+      "disableTitle": "Désactiver l'utilisateur",
+      "disableMessage": "{{name}} ne pourra plus se connecter.",
+      "resetTitle": "Réinitialiser le mot de passe",
+      "resetMessage": "{{name}} recevra un nouveau mot de passe temporaire et devra le changer à sa prochaine connexion.",
+      "deleteTitle": "Supprimer l'utilisateur",
+      "deleteMessage": "{{name}} sera retiré de l'espace de travail."
+    },
+    "empty": {
+      "noMatch": "Aucun utilisateur ne correspond à vos filtres",
+      "noMatchText": "Essayez une autre recherche ou effacez les filtres.",
+      "none": "Aucun utilisateur pour le moment"
+    },
+    "toast": {
+      "credentialsSent": "Identifiants envoyés par e-mail",
+      "enabled": "Utilisateur activé",
+      "disabled": "Utilisateur désactivé",
+      "unlocked": "Utilisateur déverrouillé",
+      "deleted": "Utilisateur supprimé",
+      "updated": "Utilisateur mis à jour"
+    },
+    "form": {
+      "titleNew": "Nouvel utilisateur",
+      "titleEdit": "Modifier l'utilisateur",
+      "create": "Créer",
+      "fullName": "Nom complet",
+      "email": "E-mail",
+      "username": "Identifiant",
+      "usernameHelper": "Laissez vide pour le générer automatiquement",
+      "role": "Rôle",
+      "employee": "Employé lié (facultatif)",
+      "fullNameRequired": "Saisissez le nom complet",
+      "emailInvalid": "Saisissez une adresse e-mail valide"
+    },
+    "tempPassword": {
+      "title": "Mot de passe temporaire",
+      "shareWith": "Communiquez ce mot de passe à {{username}}.",
+      "shareGeneric": "Communiquez ce mot de passe à l'utilisateur.",
+      "mustChange": "Il devra le changer dès sa première connexion.",
+      "copy": "Copier le mot de passe",
+      "copied": "Mot de passe copié",
+      "copyFailed": "Copie impossible. Sélectionnez le mot de passe et copiez-le manuellement.",
+      "notShown": "Il ne sera plus affiché par la suite.",
+      "done": "Terminé"
+    }
+  },
+  "audit": {
+    "title": "Journal d'audit",
+    "description": "Un historique transparent des modifications effectuées dans MetalWorks.",
+    "columns": {
+      "date": "Date",
+      "action": "Action",
+      "entity": "Entité",
+      "user": "Utilisateur",
+      "ip": "IP"
+    },
+    "system": "Système",
+    "allActions": "Toutes les actions",
+    "filters": {
+      "action": "Action",
+      "entity": "Entité",
+      "user": "Utilisateur",
+      "from": "Du",
+      "to": "Au"
+    },
+    "clearFilters": "Effacer les filtres",
+    "loadError": "Impossible de charger l'activité d'audit.",
+    "empty": {
+      "title": "Aucune activité trouvée",
+      "text": "Les actions d'administration correspondant aux filtres apparaîtront ici."
+    },
+    "noMetadata": "Aucune métadonnée pour cette entrée.",
+    "close": "Fermer"
+  },
+  "notifications": {
+    "description": "Alertes concernant les machines et les ordres de travail.",
+    "unreadOnly": "Non lues uniquement",
+    "empty": {
+      "title": "Aucune notification",
+      "text": "Rien à afficher pour le moment."
+    }
+  },
+  "profile": {
+    "eyebrow": "Paramètres du compte",
+    "title": "Mon profil",
+    "subtitle": "Consultez votre identité et vos accès à l'espace de travail.",
+    "fields": {
+      "fullName": "Nom complet",
+      "username": "Identifiant",
+      "email": "E-mail",
+      "role": "Rôle",
+      "lastLogin": "Dernière connexion",
+      "employee": "Employé lié"
+    },
+    "notLinked": "Non lié",
+    "changePassword": "Changer le mot de passe →"
+  }
+}

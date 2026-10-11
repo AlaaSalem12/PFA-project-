@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Autocomplete, MenuItem, Stack, TextField } from '@mui/material';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { applyFieldErrors, getErrorMessage } from '../../api/errors';
 import { listMachines } from '../../api/machines.api';
@@ -21,26 +22,18 @@ export interface MachineOption {
   name: string;
 }
 
-const schema = z.object({
-  machine: z
-    .object({ id: z.number(), code: z.string(), name: z.string() })
-    .nullable()
-    .superRefine((value, ctx) => {
-      if (value === null) ctx.addIssue({ code: 'custom', message: 'Select a machine' });
-    }),
-  type: z.enum(['PREVENTIVE', 'CORRECTIVE']),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
-  description: z.string().trim().min(3, 'Describe the work to do'),
-  assignee: z
-    .object({
-      id: z.number(),
-      matricule: z.string(),
-      fullName: z.string(),
-      position: z.string().optional(),
-    })
-    .nullable(),
-});
-type Values = z.infer<typeof schema>;
+interface Values {
+  machine: MachineOption | null;
+  type: 'PREVENTIVE' | 'CORRECTIVE';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  description: string;
+  assignee: {
+    id: number;
+    matricule: string;
+    fullName: string;
+    position?: string | undefined;
+  } | null;
+}
 
 const FORM_ID = 'create-work-order-form';
 
@@ -68,7 +61,33 @@ export function CreateWorkOrderDialog({
   onClose,
   onCreated,
 }: CreateWorkOrderDialogProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const schema = useMemo(
+    () =>
+      z.object({
+        machine: z
+          .object({ id: z.number(), code: z.string(), name: z.string() })
+          .nullable()
+          .superRefine((value, ctx) => {
+            if (value === null) {
+              ctx.addIssue({ code: 'custom', message: t('workOrders.create.machineRequired') });
+            }
+          }),
+        type: z.enum(['PREVENTIVE', 'CORRECTIVE']),
+        priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+        description: z.string().trim().min(3, t('workOrders.create.descriptionRequired')),
+        assignee: z
+          .object({
+            id: z.number(),
+            matricule: z.string(),
+            fullName: z.string(),
+            position: z.string().optional(),
+          })
+          .nullable(),
+      }),
+    [t],
+  );
   const [machineSearch, setMachineSearch] = useState('');
   const [employeeSearch, setEmployeeSearch] = useState('');
   const debouncedMachine = useDebouncedValue(machineSearch, 300);
@@ -110,7 +129,7 @@ export function CreateWorkOrderDialog({
         ...(values.assignee ? { assignedToId: values.assignee.id } : {}),
       }),
     onSuccess: (order) => {
-      toast.success(`Work order #${order.id} created`);
+      toast.success(t('workOrders.create.created', { id: order.id }));
       void queryClient.invalidateQueries({ queryKey: ['work-orders'] });
       void queryClient.invalidateQueries({ queryKey: ['machine-work-orders'] });
       void queryClient.invalidateQueries({ queryKey: ['employee-work-orders'] });
@@ -125,9 +144,9 @@ export function CreateWorkOrderDialog({
   return (
     <FormDialog
       open={open}
-      title="Create work order"
+      title={t('workOrders.create.title')}
       formId={FORM_ID}
-      submitLabel="Create"
+      submitLabel={t('workOrders.create.submit')}
       loading={mutation.isPending}
       onClose={onClose}
     >
@@ -156,7 +175,7 @@ export function CreateWorkOrderDialog({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Machine"
+                  label={t('workOrders.create.machine')}
                   required
                   error={!!errors.machine}
                   helperText={errors.machine?.message}
@@ -170,7 +189,7 @@ export function CreateWorkOrderDialog({
             name="type"
             control={control}
             render={({ field }) => (
-              <TextField select fullWidth label="Type" {...field}>
+              <TextField select fullWidth label={t('workOrders.create.type')} {...field}>
                 {WORK_ORDER_TYPES.map((value) => (
                   <MenuItem key={value} value={value}>
                     {formatEnum(value)}
@@ -183,7 +202,7 @@ export function CreateWorkOrderDialog({
             name="priority"
             control={control}
             render={({ field }) => (
-              <TextField select fullWidth label="Priority" {...field}>
+              <TextField select fullWidth label={t('workOrders.create.priority')} {...field}>
                 {WORK_ORDER_PRIORITIES.map((value) => (
                   <MenuItem key={value} value={value}>
                     {formatEnum(value)}
@@ -194,7 +213,7 @@ export function CreateWorkOrderDialog({
           />
         </Stack>
         <TextField
-          label="Description"
+          label={t('workOrders.create.description')}
           required
           multiline
           minRows={3}
@@ -220,7 +239,7 @@ export function CreateWorkOrderDialog({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Assignee (optional)"
+                  label={t('workOrders.create.assignee')}
                   error={!!errors.assignee}
                   helperText={errors.assignee?.message}
                 />

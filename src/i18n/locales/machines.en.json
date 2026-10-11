@@ -1,0 +1,151 @@
+{
+  "machines": {
+    "catalog": {
+      "title": "Machines",
+      "descriptionAdmin": "Keep your asset register accurate and actionable.",
+      "descriptionUser": "Browse equipment and current maintenance status.",
+      "add": "Add machine",
+      "searchPlaceholder": "Search by code, name or serial number",
+      "filters": {
+        "status": "Status",
+        "type": "Type",
+        "location": "Location",
+        "allStatuses": "All statuses",
+        "allTypes": "All types"
+      },
+      "cardView": "Card view",
+      "tableView": "Table view",
+      "columns": {
+        "machine": "Machine",
+        "type": "Type",
+        "location": "Location",
+        "status": "Status",
+        "nextMaintenance": "Next maintenance"
+      },
+      "emptyTitle": "No machines found",
+      "emptyFiltered": "No machine matches the selected filters.",
+      "emptyNone": "No machines registered yet."
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "type": "Type",
+      "brand": "Brand",
+      "model": "Model",
+      "serialNumber": "Serial number",
+      "workshop": "Workshop",
+      "location": "Location",
+      "purchaseDate": "Purchase date",
+      "hourlyCost": "Hourly cost",
+      "operatingHours": "Operating hours",
+      "maintenanceInterval": "Maintenance interval",
+      "interval": "Interval",
+      "lastMaintenance": "Last maintenance",
+      "nextMaintenance": "Next maintenance",
+      "notes": "Notes"
+    },
+    "detail": {
+      "days_one": "{{count}} day",
+      "days_other": "{{count}} days",
+      "dueOn": "Maintenance was due on {{date}}.",
+      "notesLabel": "Notes",
+      "statusUpdated": "Status updated",
+      "deleted": "Machine deleted",
+      "deleteFailed": "Machine could not be deleted.",
+      "loadFailed": "Machine could not be loaded.",
+      "backToCatalog": "Back to catalog",
+      "edit": "Edit",
+      "delete": "Delete",
+      "currentStatus": "Current maintenance status",
+      "overdue": "Maintenance overdue",
+      "updateStatus": "Update status",
+      "saving": "Saving...",
+      "tabs": {
+        "overview": "Overview",
+        "history": "History",
+        "notes": "Notes",
+        "operators": "Operators",
+        "workOrders": "Work orders"
+      },
+      "statusDialog": {
+        "title": "Update maintenance status",
+        "newStatus": "New status",
+        "comment": "Comment",
+        "commentRequired": "Required for this status"
+      },
+      "deleteDialog": {
+        "title": "Delete machine",
+        "message": "Delete {{name}} ({{code}})? This cannot be undone."
+      }
+    },
+    "history": {
+      "empty": "No status changes yet.",
+      "initialStatus": "Initial status: "
+    },
+    "notes": {
+      "added": "Note added",
+      "addLabel": "Add a maintenance note",
+      "adding": "Adding...",
+      "add": "Add note",
+      "empty": "No maintenance notes yet.",
+      "unknownAuthor": "Unknown"
+    },
+    "workOrders": {
+      "create": "Create work order",
+      "empty": "No work orders for this machine.",
+      "opened": "Opened {{date}}"
+    },
+    "operators": {
+      "updated": "Operators updated",
+      "none": "No authorized operators yet.",
+      "edit": "Edit operators",
+      "label": "Authorized operators",
+      "searchPlaceholder": "Search employees",
+      "saving": "Saving...",
+      "save": "Save operators"
+    },
+    "form": {
+      "validation": {
+        "required": "{{label}} is required",
+        "tooLong": "{{label}} is too long",
+        "positiveNumber": "{{label}} must be a positive number",
+        "wholeNumber": "{{label}} must be a whole number"
+      },
+      "imageUpdated": "Image updated",
+      "imageUploadFailed": "Image could not be uploaded.",
+      "updated": "Machine updated",
+      "created": "Machine created",
+      "savedImageFailed": "Machine saved, but the image could not be uploaded.",
+      "saveFailed": "Machine could not be saved.",
+      "imageError": {
+        "type": "Use a JPEG, PNG or WebP image.",
+        "size": "The image must be 5 MB or smaller."
+      },
+      "invalid": "Invalid machine.",
+      "editTitle": "Edit machine",
+      "addTitle": "Add machine",
+      "addDescription": "Register a new machine in the asset catalog.",
+      "sections": {
+        "identity": "Identity",
+        "location": "Location",
+        "finance": "Finance and usage",
+        "maintenance": "Maintenance",
+        "notes": "Notes",
+        "image": "Image"
+      },
+      "hourlyCostTnd": "Hourly cost (TND)",
+      "intervalDays": "Interval (days)",
+      "nextMaintenanceDue": "Next maintenance due",
+      "imageHintEdit": "The image is uploaded as soon as you pick a file.",
+      "imageHintCreate": "The image is uploaded after the machine is created.",
+      "previewAlt": "Machine preview",
+      "noImage": "No image",
+      "uploading": "Uploading...",
+      "chooseImage": "Choose image",
+      "imageFormats": "JPEG, PNG or WebP, 5 MB maximum.",
+      "saving": "Saving...",
+      "saveChanges": "Save changes",
+      "create": "Create machine"
+    }
+  }
+}

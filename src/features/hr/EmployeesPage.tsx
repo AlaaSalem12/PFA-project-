@@ -4,6 +4,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { listEmployees } from '../../api/employees.api';
 import { listDepartments, listPositions } from '../../api/organization.api';
@@ -18,6 +19,7 @@ import { EMPLOYEE_STATUSES } from './constants';
 import { EmployeeStatusChip } from './EmployeeStatusChip';
 
 export function EmployeesPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const urlState = useUrlState({ defaultSize: 20, defaultSort: 'matricule,asc' });
   const { search, setSearch, filters, setFilter } = urlState;
@@ -39,17 +41,17 @@ export function EmployeesPage() {
 
   const columns = useMemo<GridColDef<Employee>[]>(
     () => [
-      { field: 'matricule', headerName: 'Matricule', width: 130 },
+      { field: 'matricule', headerName: t('hr.common.matricule'), width: 130 },
       {
         field: 'lastName',
-        headerName: 'Name',
+        headerName: t('hr.common.name'),
         flex: 1.3,
         minWidth: 190,
         valueGetter: (_value, row) => `${row.firstName} ${row.lastName}`,
       },
       {
         field: 'department',
-        headerName: 'Department',
+        headerName: t('hr.common.department'),
         sortable: false,
         flex: 1,
         minWidth: 150,
@@ -57,7 +59,7 @@ export function EmployeesPage() {
       },
       {
         field: 'position',
-        headerName: 'Position',
+        headerName: t('hr.common.position'),
         sortable: false,
         flex: 1,
         minWidth: 150,
@@ -65,18 +67,18 @@ export function EmployeesPage() {
       },
       {
         field: 'status',
-        headerName: 'Status',
+        headerName: t('hr.common.status'),
         width: 140,
         renderCell: ({ row }) => <EmployeeStatusChip status={row.status} />,
       },
       {
         field: 'hireDate',
-        headerName: 'Hire date',
+        headerName: t('hr.common.hireDate'),
         width: 140,
         valueFormatter: (value: string) => formatDate(value),
       },
     ],
-    [],
+    [t],
   );
 
   const hasFilters = Boolean(
@@ -86,15 +88,15 @@ export function EmployeesPage() {
   return (
     <Box>
       <PageHeader
-        title="Employees"
-        description="Manage the workforce directory."
+        title={t('hr.list.title')}
+        description={t('hr.list.description')}
         action={
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate('/hr/employees/new')}
           >
-            Add employee
+            {t('hr.list.add')}
           </Button>
         }
       />
@@ -102,7 +104,7 @@ export function EmployeesPage() {
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <TextField
           size="small"
-          placeholder="Search name or matricule"
+          placeholder={t('hr.list.searchPlaceholder')}
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
           sx={{ minWidth: { md: 280 } }}
@@ -119,12 +121,12 @@ export function EmployeesPage() {
         <TextField
           select
           size="small"
-          label="Department"
+          label={t('hr.common.department')}
           value={filters.departmentId ?? ''}
           onChange={(event) => setFilter('departmentId', event.target.value || null)}
           sx={{ minWidth: 180 }}
         >
-          <MenuItem value="">All departments</MenuItem>
+          <MenuItem value="">{t('hr.list.allDepartments')}</MenuItem>
           {(departments.data ?? []).map((item) => (
             <MenuItem key={item.id} value={String(item.id)}>
               {item.name}
@@ -134,12 +136,12 @@ export function EmployeesPage() {
         <TextField
           select
           size="small"
-          label="Position"
+          label={t('hr.common.position')}
           value={filters.positionId ?? ''}
           onChange={(event) => setFilter('positionId', event.target.value || null)}
           sx={{ minWidth: 180 }}
         >
-          <MenuItem value="">All positions</MenuItem>
+          <MenuItem value="">{t('hr.list.allPositions')}</MenuItem>
           {(positions.data ?? []).map((item) => (
             <MenuItem key={item.id} value={String(item.id)}>
               {item.name}
@@ -149,12 +151,12 @@ export function EmployeesPage() {
         <TextField
           select
           size="small"
-          label="Status"
+          label={t('hr.common.status')}
           value={filters.status ?? ''}
           onChange={(event) => setFilter('status', event.target.value || null)}
           sx={{ minWidth: 160 }}
         >
-          <MenuItem value="">All statuses</MenuItem>
+          <MenuItem value="">{t('hr.list.allStatuses')}</MenuItem>
           {EMPLOYEE_STATUSES.map((status) => (
             <MenuItem key={status} value={status}>
               {formatEnum(status)}
@@ -175,8 +177,8 @@ export function EmployeesPage() {
         onRowClick={(row) => navigate(`/hr/employees/${row.id}`)}
         emptyState={
           <EmptyState
-            title={hasFilters ? 'No employees match your filters' : 'No employees yet'}
-            text={hasFilters ? 'Try a different search or clear the filters.' : undefined}
+            title={hasFilters ? t('hr.list.emptyFiltered') : t('hr.list.empty')}
+            text={hasFilters ? t('hr.list.emptyFilteredText') : undefined}
           />
         }
       />

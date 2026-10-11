@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   Autocomplete,
@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { listAuditLogs, type AuditLog } from '../../api/audit.api';
 import { getErrorMessage } from '../../api/errors';
 import { listUsers } from '../../api/users.api';
@@ -42,47 +43,51 @@ function formatValue(value: unknown): string {
   return String(value);
 }
 
-const columns: GridColDef<AuditLog>[] = [
-  {
-    field: 'createdAt',
-    headerName: 'Date',
-    width: 180,
-    valueFormatter: (value: string) => formatDateTime(value),
-  },
-  {
-    field: 'action',
-    headerName: 'Action',
-    flex: 1,
-    minWidth: 220,
-    renderCell: ({ row }) => (
-      <Typography variant="body2" fontWeight={700}>
-        {row.action}
-      </Typography>
-    ),
-  },
-  {
-    field: 'entity',
-    headerName: 'Entity',
-    width: 200,
-    valueGetter: (_value, row) => (row.entityId ? `${row.entity} #${row.entityId}` : row.entity),
-  },
-  {
-    field: 'user',
-    headerName: 'User',
-    width: 180,
-    sortable: false,
-    valueGetter: (_value, row) => row.user?.fullName ?? 'System',
-  },
-  {
-    field: 'ip',
-    headerName: 'IP',
-    width: 140,
-    sortable: false,
-    valueGetter: (_value, row) => row.ip ?? '—',
-  },
-];
+function buildColumns(t: (key: string) => string): GridColDef<AuditLog>[] {
+  return [
+    {
+      field: 'createdAt',
+      headerName: t('audit.columns.date'),
+      width: 180,
+      valueFormatter: (value: string) => formatDateTime(value),
+    },
+    {
+      field: 'action',
+      headerName: t('audit.columns.action'),
+      flex: 1,
+      minWidth: 220,
+      renderCell: ({ row }) => (
+        <Typography variant="body2" fontWeight={700}>
+          {row.action}
+        </Typography>
+      ),
+    },
+    {
+      field: 'entity',
+      headerName: t('audit.columns.entity'),
+      width: 200,
+      valueGetter: (_value, row) => (row.entityId ? `${row.entity} #${row.entityId}` : row.entity),
+    },
+    {
+      field: 'user',
+      headerName: t('audit.columns.user'),
+      width: 180,
+      sortable: false,
+      valueGetter: (_value, row) => row.user?.fullName ?? t('audit.system'),
+    },
+    {
+      field: 'ip',
+      headerName: t('audit.columns.ip'),
+      width: 140,
+      sortable: false,
+      valueGetter: (_value, row) => row.ip ?? '—',
+    },
+  ];
+}
 
 export function AuditLogPage() {
+  const { t } = useTranslation();
+  const columns = useMemo(() => buildColumns(t), [t]);
   const urlState = useUrlState({ defaultSize: 20, defaultSort: 'createdAt,desc' });
   const { filters } = urlState;
   const [selected, setSelected] = useState<AuditLog | null>(null);
@@ -124,21 +129,18 @@ export function AuditLogPage() {
 
   return (
     <Box>
-      <PageHeader
-        title="Audit log"
-        description="A transparent record of changes made across MetalWorks."
-      />
+      <PageHeader title={t('audit.title')} description={t('audit.description')} />
       <Card sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap" useFlexGap>
           <TextField
             select
             size="small"
-            label="Action"
+            label={t('audit.filters.action')}
             value={filters.action ?? ''}
             onChange={(event) => urlState.setFilter('action', event.target.value)}
             sx={{ minWidth: 220 }}
           >
-            <MenuItem value="">All actions</MenuItem>
+            <MenuItem value="">{t('audit.allActions')}</MenuItem>
             {AUDIT_ACTIONS.map((action) => (
               <MenuItem key={action} value={action}>
                 {action}
@@ -147,7 +149,7 @@ export function AuditLogPage() {
           </TextField>
           <TextField
             size="small"
-            label="Entity"
+            label={t('audit.filters.entity')}
             value={entityInput}
             onChange={(event) => setEntityInput(event.target.value)}
             sx={{ minWidth: 160 }}
@@ -167,13 +169,15 @@ export function AuditLogPage() {
               setUserOption(value);
               urlState.setFilter('userId', value?.id);
             }}
-            renderInput={(inputParams) => <TextField {...inputParams} label="User" />}
+            renderInput={(inputParams) => (
+              <TextField {...inputParams} label={t('audit.filters.user')} />
+            )}
             sx={{ minWidth: 240 }}
           />
           <TextField
             size="small"
             type="date"
-            label="From"
+            label={t('audit.filters.from')}
             value={filters.from ?? ''}
             onChange={(event) => urlState.setFilter('from', event.target.value)}
             slotProps={{ inputLabel: { shrink: true } }}
@@ -181,12 +185,12 @@ export function AuditLogPage() {
           <TextField
             size="small"
             type="date"
-            label="To"
+            label={t('audit.filters.to')}
             value={filters.to ?? ''}
             onChange={(event) => urlState.setFilter('to', event.target.value)}
             slotProps={{ inputLabel: { shrink: true } }}
           />
-          {hasFilters && <Button onClick={clear}>Clear filters</Button>}
+          {hasFilters && <Button onClick={clear}>{t('audit.clearFilters')}</Button>}
         </Stack>
       </Card>
       {query.isError ? (
@@ -194,11 +198,11 @@ export function AuditLogPage() {
           severity="error"
           action={
             <Button color="inherit" size="small" onClick={() => void query.refetch()}>
-              Retry
+              {t('common.retry')}
             </Button>
           }
         >
-          {getErrorMessage(query.error, 'Audit activity could not be loaded.')}
+          {getErrorMessage(query.error, t('audit.loadError'))}
         </Alert>
       ) : (
         <Card sx={{ overflowX: 'auto' }}>
@@ -212,12 +216,7 @@ export function AuditLogPage() {
             sortModel={urlState.sortModel}
             onSortModelChange={urlState.setSortModel}
             onRowClick={setSelected}
-            emptyState={
-              <EmptyState
-                title="No activity found"
-                text="Administrative actions matching the filters will appear here."
-              />
-            }
+            emptyState={<EmptyState title={t('audit.empty.title')} text={t('audit.empty.text')} />}
           />
         </Card>
       )}
@@ -227,7 +226,8 @@ export function AuditLogPage() {
           {selected && (
             <Stack spacing={1}>
               <Typography variant="body2" color="text.secondary">
-                {formatDateTime(selected.createdAt)} · {selected.user?.fullName ?? 'System'}
+                {formatDateTime(selected.createdAt)} ·{' '}
+                {selected.user?.fullName ?? t('audit.system')}
               </Typography>
               {selected.metadata && Object.keys(selected.metadata).length > 0 ? (
                 Object.entries(selected.metadata).map(([key, value]) => (
@@ -242,14 +242,14 @@ export function AuditLogPage() {
                 ))
               ) : (
                 <Typography variant="body2" color="text.secondary">
-                  No metadata for this entry.
+                  {t('audit.noMetadata')}
                 </Typography>
               )}
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelected(null)}>Close</Button>
+          <Button onClick={() => setSelected(null)}>{t('audit.close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

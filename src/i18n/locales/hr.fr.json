@@ -1,0 +1,118 @@
+{
+  "hr": {
+    "common": {
+      "matricule": "Matricule",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "birthDate": "Date de naissance",
+      "socialSecurityNumber": "Numéro de sécurité sociale",
+      "phone": "Téléphone",
+      "email": "E-mail",
+      "address": "Adresse",
+      "hireDate": "Date d'embauche",
+      "status": "Statut",
+      "department": "Département",
+      "position": "Poste",
+      "name": "Nom",
+      "description": "Description",
+      "identity": "Identité",
+      "contact": "Contact",
+      "job": "Emploi",
+      "none": "Aucun",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "add": "Ajouter"
+    },
+    "list": {
+      "title": "Employés",
+      "description": "Gérez l'annuaire du personnel.",
+      "add": "Ajouter un employé",
+      "searchPlaceholder": "Rechercher par nom ou matricule",
+      "allDepartments": "Tous les départements",
+      "allPositions": "Tous les postes",
+      "allStatuses": "Tous les statuts",
+      "emptyFiltered": "Aucun employé ne correspond à vos filtres",
+      "emptyFilteredText": "Essayez une autre recherche ou effacez les filtres.",
+      "empty": "Aucun employé pour le moment"
+    },
+    "form": {
+      "editTitle": "Modifier l'employé",
+      "createTitle": "Ajouter un employé",
+      "createDescription": "Enregistrez un nouvel employé dans l'annuaire.",
+      "updated": "Employé mis à jour",
+      "created": "Employé créé",
+      "saveError": "L'employé n'a pas pu être enregistré.",
+      "invalid": "Employé invalide.",
+      "saveChanges": "Enregistrer les modifications",
+      "create": "Créer l'employé",
+      "validation": {
+        "matriculeRequired": "Le matricule est obligatoire",
+        "matriculeTooLong": "Le matricule est trop long",
+        "firstNameRequired": "Le prénom est obligatoire",
+        "firstNameTooLong": "Le prénom est trop long",
+        "lastNameRequired": "Le nom est obligatoire",
+        "lastNameTooLong": "Le nom est trop long",
+        "ssnTooLong": "Le numéro de sécurité sociale est trop long",
+        "phoneTooLong": "Le numéro de téléphone est trop long",
+        "phoneInvalid": "Saisissez un numéro de téléphone valide",
+        "emailTooLong": "L'adresse e-mail est trop longue",
+        "emailInvalid": "Saisissez une adresse e-mail valide",
+        "addressTooLong": "L'adresse est trop longue",
+        "hireDateRequired": "La date d'embauche est obligatoire",
+        "birthDatePast": "La date de naissance doit être dans le passé",
+        "hireAfterBirth": "La date d'embauche doit être postérieure à la date de naissance"
+      }
+    },
+    "detail": {
+      "back": "Retour aux employés",
+      "noPositionOrDepartment": "Aucun poste ni département",
+      "userAccount": "Compte utilisateur",
+      "openInUsers": "Ouvrir dans les utilisateurs",
+      "noUser": "Aucun compte utilisateur lié.",
+      "authorizedMachines": "Machines autorisées",
+      "noMachines": "Aucune machine autorisée.",
+      "assignedOrders": "Ordres de travail assignés",
+      "noOrders": "Aucun ordre de travail assigné.",
+      "deleted": "Employé supprimé",
+      "deleteError": "L'employé n'a pas pu être supprimé.",
+      "loadError": "L'employé n'a pas pu être chargé.",
+      "deleteTitle": "Supprimer l'employé",
+      "deleteMessage": "{{name}} sera retiré(e) de l'annuaire."
+    },
+    "organization": {
+      "title": "Organisation",
+      "description": "Gérez les départements et les postes.",
+      "departments": "Départements",
+      "positions": "Postes",
+      "emptyDepartments": "Aucun département pour le moment",
+      "emptyPositions": "Aucun poste pour le moment",
+      "employeeCount_one": "{{count}} employé",
+      "employeeCount_other": "{{count}} employés",
+      "cannotDelete": "Suppression impossible : {{count}} employé(s) affecté(s)",
+      "deleteItem": "Supprimer {{name}}",
+      "editItem": "Modifier {{name}}",
+      "permanentlyRemoved": "{{name}} sera définitivement supprimé(e).",
+      "department": {
+        "created": "Département créé",
+        "updated": "Département mis à jour",
+        "deleted": "Département supprimé",
+        "add": "Ajouter un département",
+        "edit": "Modifier le département",
+        "delete": "Supprimer le département"
+      },
+      "position": {
+        "created": "Poste créé",
+        "updated": "Poste mis à jour",
+        "deleted": "Poste supprimé",
+        "add": "Ajouter un poste",
+        "edit": "Modifier le poste",
+        "delete": "Supprimer le poste"
+      },
+      "validation": {
+        "nameRequired": "Le nom est obligatoire",
+        "nameTooLong": "Le nom est trop long",
+        "descriptionTooLong": "La description est trop longue"
+      }
+    }
+  }
+}
