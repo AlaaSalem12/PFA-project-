@@ -30,7 +30,8 @@
       "employees": "Employés",
       "organization": "Organisation",
       "users": "Utilisateurs",
-      "auditLog": "Journal d’audit"
+      "auditLog": "Journal d’audit",
+      "assistant": "Assistant"
     },
     "crumbs": {
       "newMachine": "Nouvelle machine",
@@ -39,7 +40,8 @@
       "notifications": "Notifications",
       "profile": "Profil",
       "changePassword": "Changer le mot de passe",
-      "forbidden": "Interdit"
+      "forbidden": "Interdit",
+      "conversation": "Conversation"
     }
   },
   "layout": {
@@ -228,6 +230,51 @@
       "ON_LEAVE": "En congé",
       "SUSPENDED": "Suspendu",
       "TERMINATED": "Terminé"
+    }
+  },
+  "assistant": {
+    "title": "Assistant IA",
+    "open": "Ouvrir l’assistant",
+    "close": "Fermer",
+    "openFullPage": "Ouvrir en pleine page",
+    "conversations": "Conversations",
+    "newConversation": "Nouvelle conversation",
+    "noConversations": "Aucune conversation pour le moment.",
+    "untitled": "Nouvelle conversation",
+    "deleteConversation": "Supprimer la conversation",
+    "deleteTitle": "Supprimer la conversation ?",
+    "deleteMessage": "Cette conversation et tous ses messages seront définitivement supprimés.",
+    "deleted": "Conversation supprimée.",
+    "toolsUsed": "Outils utilisés :",
+    "typing": "L’assistant écrit...",
+    "input": {
+      "placeholder": "Posez votre question...",
+      "send": "Envoyer"
+    },
+    "suggestions": {
+      "title": "Essayez une de ces questions :"
+    },
+    "unavailable": {
+      "title": "Assistant indisponible",
+      "text": "L’assistant IA n’est pas configuré pour le moment. Contactez un administrateur."
+    },
+    "errors": {
+      "generic": "L’assistant n’a pas pu répondre. Veuillez réessayer.",
+      "rateLimited": "Vous avez atteint la limite de messages (30 par heure). Réessayez plus tard.",
+      "unavailable": "L’assistant est momentanément indisponible. Réessayez dans quelques instants."
+    },
+    "tools": {
+      "search_machines": "Recherche de machines",
+      "get_machine": "Détail machine",
+      "get_fleet_summary": "Synthèse du parc",
+      "get_overdue_maintenance": "Maintenance en retard",
+      "get_machine_history": "Historique machine",
+      "list_work_orders": "Ordres de travail",
+      "get_maintenance_plans_due": "Plans à échéance",
+      "search_employees": "Recherche d’employés",
+      "get_hr_summary": "Synthèse RH",
+      "get_user_stats": "Statistiques utilisateurs",
+      "get_my_profile": "Mon profil"
     }
   }
 }

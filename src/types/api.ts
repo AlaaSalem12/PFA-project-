@@ -343,3 +343,27 @@ export interface MyDashboardData {
   unreadNotifications: number;
   hr?: { employees: number; onLeave: number };
 }
+
+export interface AssistantStatus {
+  enabled: boolean;
+  model: string | null;
+}
+
+export interface Conversation {
+  id: number;
+  title: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  role: 'user' | 'assistant';
+  content: string;
+  toolsUsed: string[];
+  createdAt: string;
+}
+
+export interface SendMessageResponse {
+  userMessage: ChatMessage;
+  assistantMessage: ChatMessage;
+}

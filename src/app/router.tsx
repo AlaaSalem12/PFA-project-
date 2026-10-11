@@ -87,6 +87,11 @@ const NotificationsPage = lazy(() =>
     default: module.NotificationsPage,
   })),
 );
+const AssistantPage = lazy(() =>
+  import('../features/assistant/AssistantPage').then((module) => ({
+    default: module.AssistantPage,
+  })),
+);
 const AuditLogPage = lazy(() =>
   import('../features/audit/AuditLogPage').then((module) => ({ default: module.AuditLogPage })),
 );
@@ -123,6 +128,7 @@ export function AppRouter() {
               <Route path="/admin/users" element={<UsersPage />} />
               <Route path="/admin/audit-logs" element={<AuditLogPage />} />
             </Route>
+            <Route path="/assistant/:conversationId?" element={<AssistantPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/change-password" element={<ChangePasswordPage />} />

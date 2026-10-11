@@ -8,6 +8,7 @@ import {
   EventRepeat,
   People,
   ReceiptLong,
+  SmartToy,
   SpaceDashboard,
 } from '@mui/icons-material';
 import type { UserRole } from '../types/api';
@@ -29,7 +30,10 @@ export interface NavGroup {
 export const navGroups: NavGroup[] = [
   {
     label: 'nav.groups.overview',
-    items: [{ label: 'nav.items.dashboard', path: '/dashboard', icon: SpaceDashboard }],
+    items: [
+      { label: 'nav.items.dashboard', path: '/dashboard', icon: SpaceDashboard },
+      { label: 'nav.items.assistant', path: '/assistant', icon: SmartToy },
+    ],
   },
   {
     label: 'nav.groups.maintenance',
@@ -88,6 +92,8 @@ export function getVisibleNavGroups(role: UserRole | undefined): NavGroup[] {
 /** Breadcrumb i18n keys keyed by route pattern. */
 const crumbLabels: Array<{ pattern: string; label: string }> = [
   { pattern: '/dashboard', label: 'nav.items.dashboard' },
+  { pattern: '/assistant', label: 'nav.items.assistant' },
+  { pattern: '/assistant/:conversationId', label: 'nav.crumbs.conversation' },
   { pattern: '/machines', label: 'nav.items.machines' },
   { pattern: '/machines/new', label: 'nav.crumbs.newMachine' },
   { pattern: '/machines/:id', label: 'nav.crumbs.details' },

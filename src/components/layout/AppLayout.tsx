@@ -21,6 +21,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { AssistantWidget } from '../../features/assistant/AssistantWidget';
 import { NotificationBell } from '../NotificationBell';
 import { formatEnum } from '../../utils/format';
 import { useAuthStore } from '../../store/authStore';
@@ -315,6 +316,7 @@ export function AppLayout() {
           <Outlet key={i18n.language} />
         </Box>
       </Box>
+      <AssistantWidget />
     </Box>
   );
 }

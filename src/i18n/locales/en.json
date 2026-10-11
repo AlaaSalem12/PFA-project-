@@ -30,7 +30,8 @@
       "employees": "Employees",
       "organization": "Organization",
       "users": "Users",
-      "auditLog": "Audit log"
+      "auditLog": "Audit log",
+      "assistant": "Assistant"
     },
     "crumbs": {
       "newMachine": "New machine",
@@ -39,7 +40,8 @@
       "notifications": "Notifications",
       "profile": "Profile",
       "changePassword": "Change password",
-      "forbidden": "Forbidden"
+      "forbidden": "Forbidden",
+      "conversation": "Conversation"
     }
   },
   "layout": {
@@ -228,6 +230,51 @@
       "ON_LEAVE": "On leave",
       "SUSPENDED": "Suspended",
       "TERMINATED": "Terminated"
+    }
+  },
+  "assistant": {
+    "title": "AI assistant",
+    "open": "Open the assistant",
+    "close": "Close",
+    "openFullPage": "Open full page",
+    "conversations": "Conversations",
+    "newConversation": "New conversation",
+    "noConversations": "No conversations yet.",
+    "untitled": "New conversation",
+    "deleteConversation": "Delete conversation",
+    "deleteTitle": "Delete this conversation?",
+    "deleteMessage": "This conversation and all its messages will be permanently deleted.",
+    "deleted": "Conversation deleted.",
+    "toolsUsed": "Tools used:",
+    "typing": "The assistant is typing...",
+    "input": {
+      "placeholder": "Ask your question...",
+      "send": "Send"
+    },
+    "suggestions": {
+      "title": "Try one of these questions:"
+    },
+    "unavailable": {
+      "title": "Assistant unavailable",
+      "text": "The AI assistant is not configured at the moment. Please contact an administrator."
+    },
+    "errors": {
+      "generic": "The assistant could not answer. Please try again.",
+      "rateLimited": "You have reached the message limit (30 per hour). Please try again later.",
+      "unavailable": "The assistant is temporarily unavailable. Please try again in a moment."
+    },
+    "tools": {
+      "search_machines": "Machine search",
+      "get_machine": "Machine details",
+      "get_fleet_summary": "Fleet summary",
+      "get_overdue_maintenance": "Overdue maintenance",
+      "get_machine_history": "Machine history",
+      "list_work_orders": "Work orders",
+      "get_maintenance_plans_due": "Plans due",
+      "search_employees": "Employee search",
+      "get_hr_summary": "HR summary",
+      "get_user_stats": "User statistics",
+      "get_my_profile": "My profile"
     }
   }
 }
