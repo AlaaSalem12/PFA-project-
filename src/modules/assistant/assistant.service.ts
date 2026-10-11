@@ -1,12 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import { AssistantMessage, Prisma } from "@prisma/client";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type {
+  ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageFunctionToolCall, ChatCompletionMessageParam, ChatCompletionMessageToolCall,
+} from "openai/resources/chat/completions";
 import { prisma } from "../../config/prisma";
 import { ApiError } from "../../common/api-error";
 import type { AuthUser } from "../../middlewares/auth";
 import type { ToolRegistry } from "./assistant.types";
-import { ChatClient, getLlmClient, isAssistantEnabled, llmModel } from "./llm.client";
+import { ChatClient, getLlmClient, getStreamingLlmClient, isAssistantEnabled, llmModel, StreamingChatClient } from "./llm.client";
 import { assistantRegistry } from "./tools/registry";
 
 export const MAX_ROUNDS = 4;
@@ -78,8 +80,18 @@ const parseArguments = (raw: string | undefined): unknown => {
   }
 };
 
+/** Server-sent events of the streaming endpoint. */
+export type StreamEvent = { type: "tool"; name: string } | { type: "delta"; text: string };
+
+/** One LLM round: returns the text and the function calls the model asked for. */
+type RoundCaller = (params: ChatCompletionCreateParamsNonStreaming) =>
+  Promise<{ content: string; toolCalls: ChatCompletionMessageFunctionToolCall[] }>;
+
+const isFunctionCall = (call: ChatCompletionMessageToolCall): call is ChatCompletionMessageFunctionToolCall => call.type === "function";
+
 export type AssistantDeps = {
   client?: () => ChatClient;
+  streamClient?: () => StreamingChatClient;
   registry?: ToolRegistry;
   model?: () => string;
   enabled?: () => boolean;
@@ -87,12 +99,14 @@ export type AssistantDeps = {
 
 export class AssistantService {
   private readonly client: () => ChatClient;
+  private readonly streamClient: () => StreamingChatClient;
   private readonly registry: ToolRegistry;
   private readonly model: () => string;
   private readonly enabled: () => boolean;
 
   constructor(deps: AssistantDeps = {}) {
     this.client = deps.client ?? getLlmClient;
+    this.streamClient = deps.streamClient ?? getStreamingLlmClient;
     this.registry = deps.registry ?? assistantRegistry;
     this.model = deps.model ?? llmModel;
     this.enabled = deps.enabled ?? isAssistantEnabled;
@@ -138,9 +152,55 @@ export class AssistantService {
     await prisma.assistantConversation.delete({ where: { id: conversationId } });
   }
 
-  async sendMessage(user: AuthUser, conversationId: number, content: string) {
+  /** Checks that run before anything is saved, so the streaming route can still answer with a normal JSON error. */
+  async assertCanSend(userId: number, conversationId: number): Promise<void> {
     if (!this.enabled()) throw this.unavailable();
-    await this.findOwnConversation(user.id, conversationId);
+    await this.findOwnConversation(userId, conversationId);
+  }
+
+  async sendMessage(user: AuthUser, conversationId: number, content: string) {
+    return this.converse(user, conversationId, content, async (params) => {
+      const completion = await this.client().chat.completions.create(params);
+      const reply = completion.choices[0]?.message;
+      if (!reply) throw new Error("empty completion");
+      return { content: reply.content ?? "", toolCalls: (reply.tool_calls ?? []).filter(isFunctionCall) };
+    });
+  }
+
+  /**
+   * Same agent loop, but every round is streamed: text deltas are emitted as they arrive, tool-call deltas are
+   * assembled silently and only announced as `tool` events. The final, saved answer is returned at the end.
+   */
+  async streamMessage(user: AuthUser, conversationId: number, content: string, emit: (event: StreamEvent) => void) {
+    return this.converse(user, conversationId, content, async (params) => {
+      const stream = await this.streamClient().chat.completions.create({ ...params, stream: true });
+      let text = "";
+      const calls = new Map<number, { id: string; name: string; arguments: string }>();
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        if (!delta) continue;
+        for (const part of delta.tool_calls ?? []) {
+          const entry = calls.get(part.index) ?? { id: "", name: "", arguments: "" };
+          if (part.id) entry.id = part.id;
+          if (part.function?.name) entry.name += part.function.name;
+          if (part.function?.arguments) entry.arguments += part.function.arguments;
+          calls.set(part.index, entry);
+        }
+        if (delta.content) {
+          text += delta.content;
+          if (calls.size === 0) emit({ type: "delta", text: delta.content });
+        }
+      }
+      const toolCalls = [...calls.entries()].map(([index, call]): ChatCompletionMessageFunctionToolCall => ({
+        id: call.id || `call_${index}`, type: "function", function: { name: call.name, arguments: call.arguments },
+      }));
+      return { content: text, toolCalls };
+    }, (name) => emit({ type: "tool", name }));
+  }
+
+  /** The agent loop shared by the plain and the streaming endpoints. */
+  private async converse(user: AuthUser, conversationId: number, content: string, callRound: RoundCaller, onTool?: (name: string) => void) {
+    await this.assertCanSend(user.id, conversationId);
     const userMessage = await prisma.assistantMessage.create({ data: { conversationId, role: "USER", content } });
     const startedAt = Date.now();
 
@@ -163,9 +223,9 @@ export class AssistantService {
 
     for (let round = 0; round < MAX_ROUNDS && answer === undefined; round += 1) {
       const lastRound = round === MAX_ROUNDS - 1;
-      let completion;
+      let reply: Awaited<ReturnType<RoundCaller>>;
       try {
-        completion = await this.client().chat.completions.create({
+        reply = await callRound({
           model: this.model(),
           messages,
           temperature: 0.2,
@@ -177,17 +237,14 @@ export class AssistantService {
         throw this.unavailable();
       }
 
-      const reply = completion.choices[0]?.message;
-      if (!reply) throw this.unavailable();
-      const toolCalls = (reply.tool_calls ?? []).filter((call) => call.type === "function");
-
-      if (toolCalls.length === 0 || lastRound) {
-        answer = toolCalls.length === 0 ? (reply.content ?? "").trim() : ROUND_CAP_ANSWER;
+      if (reply.toolCalls.length === 0 || lastRound) {
+        answer = reply.toolCalls.length === 0 ? reply.content.trim() : ROUND_CAP_ANSWER;
         break;
       }
 
-      messages.push({ role: "assistant", content: reply.content ?? "", tool_calls: toolCalls });
-      for (const call of toolCalls) {
+      messages.push({ role: "assistant", content: reply.content, tool_calls: reply.toolCalls });
+      for (const call of reply.toolCalls) {
+        onTool?.(call.function.name);
         const args = parseArguments(call.function.arguments);
         const result = (args as { __invalidJson?: string }).__invalidJson !== undefined
           ? { error: "arguments are not valid JSON" }
